@@ -37,7 +37,7 @@ class RogSimEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
-                    vaccine_score_weight=None,
+                    vaccine_score_weight=-1,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -145,7 +145,7 @@ class RogSimEnv(gym.Env):
         # Tick model
         self._model.tick()
 
-        if self.vaccine_score_weight is None:
+        if self.vaccine_score_weight >= 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
         else:
             self.running_score = self.get_current_game_score(include_vaccine_score=True)
@@ -311,7 +311,7 @@ class RogSimEnv(gym.Env):
                     _observation = self._model.get_observation()
 
         # Compute difference in game score
-        if self.vaccine_score_weight is None:
+        if self.vaccine_score_weight >= 0:
             current_score = self.get_current_game_score(include_vaccine_score=False)
             _step_reward = current_score - self.running_score
             self.cumulative_reward += _step_reward
