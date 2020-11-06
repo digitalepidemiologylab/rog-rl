@@ -37,6 +37,7 @@ class RogSimEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
+                    vaccine_score_weight=None,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -54,6 +55,7 @@ class RogSimEnv(gym.Env):
         self.height = self.config["height"]
 
         self.use_renderer = self.config["use_renderer"]
+        self.vaccine_score_weight = self.config["vaccine_score_weight"]
 
         self.action_space = spaces.MultiDiscrete(
             [
@@ -143,7 +145,10 @@ class RogSimEnv(gym.Env):
         # Tick model
         self._model.tick()
 
-        self.running_score = self.get_current_game_score()
+        if self.vaccine_score_weight is None:
+            self.running_score = self.get_current_game_score(include_vaccine_score=False)
+        else:
+            self.running_score = self.get_current_game_score(include_vaccine_score=True)
         self.cumulative_reward = 0
         # return observation
         return self._model.get_observation()
@@ -235,16 +240,20 @@ class RogSimEnv(gym.Env):
                 print(render_output)
             return render_output
 
-    def get_current_game_score(self):
+    def get_current_game_score(self, include_vaccine_score):
         """
         Returns the current game score
 
         The game score is currently represented as :
             (percentage of susceptibles left in the population)
         """
-        return self._model.get_population_fraction_by_state(
-                AgentState.SUSCEPTIBLE
-            )
+        score = self._model.get_population_fraction_by_state(
+                    AgentState.SUSCEPTIBLE)
+        if include_vaccine_score:
+            score += self._model.get_population_fraction_by_state(
+                        AgentState.VACCINATED)
+        
+        return score
 
     def get_current_game_metrics(self, dummy_simulation=False):
         """
@@ -302,16 +311,27 @@ class RogSimEnv(gym.Env):
                     _observation = self._model.get_observation()
 
         # Compute difference in game score
-        current_score = self.get_current_game_score()
-        _step_reward = current_score - self.running_score
-        self.cumulative_reward += _step_reward
-        self.running_score = current_score
+        if self.vaccine_score_weight is None:
+            current_score = self.get_current_game_score(include_vaccine_score=False)
+            _step_reward = current_score - self.running_score
+            self.cumulative_reward += _step_reward
+            self.running_score = current_score
+        else:
+            current_score = self.get_current_game_score(include_vaccine_score=True)
+            _step_reward = current_score - self.running_score
+            self.running_score = current_score
+            _done = not self._model.is_running()
+            if _done:
+                susecptible_percentage = self.get_current_game_score(include_vaccine_score=False)
+                _step_reward -= (current_score - susecptible_percentage) * self.vaccine_score_weight
+            self.cumulative_reward += _step_reward
 
         # Add custom game metrics to info key
         game_metrics = self.get_current_game_metrics()
         for _key in game_metrics.keys():
             _info[_key] = game_metrics[_key]
-
+        
+        _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
         return _observation, _step_reward, _done, _info
 
