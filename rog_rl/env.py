@@ -7,7 +7,8 @@ import numpy as np
 
 
 from rog_rl.agent_state import AgentState
-from rog_rl.model import DiseaseSimModel
+# from rog_rl.model import DiseaseSimModel
+from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 
@@ -123,7 +124,7 @@ class RogSimEnv(gym.Env):
             and during every new instantiation of a DiseaseEngine instance,
             it is seeded with a random number sampled from the self.np_random.
         """
-        _simulator_instance_seed = self.np_random.rand()
+        _simulator_instance_seed = self.np_random.randint(4294967296)
         # Instantiate Disease Model
         self._model = DiseaseSimModel(
             width, height,
@@ -141,9 +142,9 @@ class RogSimEnv(gym.Env):
 
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
-
-        # Tick model
-        self._model.tick()
+        
+#         Tick model
+#         self._model.tick() # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -270,7 +271,7 @@ class RogSimEnv(gym.Env):
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
         # Add R0 to the game metrics
-        _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
+#         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
 
     def step(self, action):
