@@ -10,20 +10,29 @@ from rog_rl.agent_state import AgentState
 from rog_rl.model import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
-from rog_rl.envs.rog_sim_single_agent_env import RogSimSingleAgentEnv
-
 class ActionType(Enum):
-    STEP = 0
-    VACCINATE = 1
+    MOVE_N = 0
+    MOVE_E = 1
+    MOVE_W = 2
+    MOVE_S = 3
+    VACCINATE = 4
+    SIM_TICK = 5
 
 
-class RogSimEnv(gym.Env):
+class RogSimSingleAgentEnv(gym.Env):
+    """
+    A single agent env contains a single 
+    vaccination agent which can move around the grid 
+    and apart from choose to vaccinate any cell 
+    or 
+    step ahead in the internal disease simulator.
+    """
 
     def __init__(self, config={}):
         # Setup Config
         self.default_config = dict(
-                    width=50,
-                    height=50,
+                    width=20,
+                    height=20,
                     population_density=0.75,
                     vaccine_density=0.05,
                     initial_infection_fraction=0.1,
@@ -39,7 +48,7 @@ class RogSimEnv(gym.Env):
                         "recovery_period_sigma": 0,
                     },
                     vaccine_score_weight=-1,
-                    max_simulation_timesteps=200,
+                    max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
                     toric=True,
@@ -58,10 +67,21 @@ class RogSimEnv(gym.Env):
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
 
-        self.action_space = spaces.MultiDiscrete(
-            [
-                len(ActionType), self.width, self.height
-            ])
+        """
+        The action space is composed of 5 discrete actions : 
+
+        MOVE_N : Moves the vaccination-agent north
+        MOVE_E : Moves the vaccination-agent east
+        MOVE_W : Moves the vaccination-agent west
+        MOVE_S : Moves the vaccination-agent south
+        
+        VACCINATE : Vaccinates the current location of the vaccination-agent
+        SIM_TICK : adds a simulation tick to the disease model 
+        """
+        self.action_space = spaces.Discrete(
+            len(ActionType)
+        )
+
         self.observation_space = spaces.Box(
                                     low=np.float32(0),
                                     high=np.float32(1),
@@ -80,6 +100,9 @@ class RogSimEnv(gym.Env):
             self.initialize_renderer(mode=self.use_renderer)
 
         self.cumulative_reward = 0
+
+        self.vacc_agent_x = 0
+        self.vacc_agent_y = 0
 
     def set_renderer(self, renderer):
         self.use_renderer = renderer
@@ -136,6 +159,10 @@ class RogSimEnv(gym.Env):
             toric, seed=_simulator_instance_seed
         )
 
+        # Initialize location of vaccination agent
+        self.vacc_agent_x = self.np_random.randint(self.width)
+        self.vacc_agent_y = self.np_random.randint(self.height)
+        
         # Set the max timesteps of an env as the sum of :
         # - max_simulation_timesteps
         # - Number of Vaccines available
@@ -143,8 +170,8 @@ class RogSimEnv(gym.Env):
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
         
-#         Tick model
-#         self._model.tick() # Not needed for model_np
+        # Tick model
+        self._model.tick() 
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -271,7 +298,7 @@ class RogSimEnv(gym.Env):
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
         # Add R0 to the game metrics
-#         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
+        # _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
 
     def step(self, action):
@@ -284,22 +311,27 @@ class RogSimEnv(gym.Env):
         if self._model is None:
             raise Exception("env.step() called before calling env.reset()")
 
-        action = [int(x) for x in action]
         if self.debug:
             print("Action : ", action)
-
-        # Handle action propagation in real simulator
-        action_type = action[0]
-        cell_x = action[1]
-        cell_y = action[2]
 
         _observation = False
         _done = False
         _info = {}
-        if action_type == ActionType.STEP.value:
+
+        if action == ActionType.SIM_TICK.value:
+            """
+            Handle SIM_TICK action
+            """
+            # Handle action propagation in real simulator
             self._model.tick()
             _observation = self._model.get_observation()
-        elif action_type == ActionType.VACCINATE.value:
+        elif action == ActionType.VACCINATE.value:
+            """
+            Handle VACCINATE action
+            """
+            # Vaccinate the cell where the vaccination agent currently is 
+            cell_x = self.vacc_agent_x
+            cell_y = self.vacc_agent_y
             vaccination_success, response = \
                 self._model.vaccinate_cell(cell_x, cell_y)
             _observation = self._model.get_observation()
@@ -310,6 +342,35 @@ class RogSimEnv(gym.Env):
                 while self._model.is_running():
                     self._model.tick()
                     _observation = self._model.get_observation()
+            
+        elif action == ActionType.MOVE_N.value:
+            """
+            Handle MOVE_N action
+            """
+            self.vacc_agent_y -= 1
+            self.vacc_agent_y %= self.height
+        
+        elif action == ActionType.MOVE_E.value:
+            """
+            Handle MOVE_E action
+            """
+            self.vacc_agent_x += 1
+            self.vacc_agent_x %= self.width
+
+        elif action == ActionType.MOVE_S.value:
+            """
+            Handle MOVE_S action
+            """
+            self.vacc_agent_y += 1
+            self.vacc_agent_y %= self.height
+        
+        elif action == ActionType.MOVE_W.value:
+            """
+            Handle MOVE_W action
+            """
+            self.vacc_agent_x -= 1
+            self.vacc_agent_x %= self.width
+
 
         # Compute difference in game score
         if self.vaccine_score_weight < 0:
@@ -381,8 +442,8 @@ if __name__ == "__main__":
 
     render = "ansi"  # change to "human"
     env_config = dict(
-                    width=5,
-                    height=5,
+                    width=20,
+                    height=20,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
@@ -397,13 +458,13 @@ if __name__ == "__main__":
                         "recovery_period_mu":  14 * 4,
                         "recovery_period_sigma":  0,
                     },
-                    max_simulation_timesteps=200,
+                    max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=render,
                     toric=False,
                     dummy_simulation=False,
                     debug=True)
-    env = RogSimEnv(config=env_config)
+    env = RogSimSingleAgentEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = False
     if record:
@@ -414,19 +475,24 @@ if __name__ == "__main__":
     k = 0
     env.render(mode=render)
     while not done:
-        _action = input("Enter action - ex: [1, 4, 2] : ")
-        if _action.strip() == "":
-            _action = env.action_space.sample()
-        else:
-            _action = [int(x) for x in _action.split()]
-            assert _action[0] in [0, 1]
-            assert _action[1] in list(range(env._model.width))
-            assert _action[2] in list(range(env._model.height))
+        print("""
+        Valid Actions : 
+            MOVE_N = 0
+            MOVE_E = 1
+            MOVE_W = 2
+            MOVE_S = 3
+
+            VACCINATE = 4
+            SIM_TICK = 5
+        """)
+        # _action = int(input("Enter action - ex : "))
+        _action = env.action_space.sample()
+
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
         env.render(mode=render)
+        print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
-
+        print("="*100)
         # print(observation.shape)
         # print(k, reward, done)
-    # print(observation.shape())
