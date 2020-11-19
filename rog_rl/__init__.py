@@ -5,6 +5,7 @@ __email__ = 'spmohanty91@gmail.com'
 __version__ = '0.1.0'
 
 from rog_rl.env import RogSimEnv  # noqa
+from rog_rl.env import RogSimSingleAgentEnv  # noqa
 
 from gym.envs.registration import register
 

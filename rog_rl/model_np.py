@@ -4,6 +4,8 @@ from rog_rl.agent_state import AgentState
 from scipy.signal import convolve2d
 from collections import deque
 
+from rog_rl.vaccination_response import VaccinationResponse
+
 class DiseaseSimModel:
     """
     The model class holds the model-level attributes, manages the agents,

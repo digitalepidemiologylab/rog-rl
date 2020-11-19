@@ -82,13 +82,25 @@ class RogSimSingleAgentEnv(gym.Env):
             len(ActionType)
         )
 
+        # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated 
+
+        """
+        The observation space in this case will be of shape (width, height, 3)
+        where we represent 4 channels of information across the grid
+
+        Channel 1 : Is the cell Susceptible
+        Channel 2 : Is an agent in this cell exposed/infected at some point 
+        Channel 3 : Is an agent in this cell Vaccinated
+        Channel 4 : Is the vaccination agent here
+        """
+        self.observation_channels = 4
         self.observation_space = spaces.Box(
                                     low=np.float32(0),
                                     high=np.float32(1),
                                     shape=(
                                         self.width,
                                         self.height,
-                                        len(AgentState)))
+                                        self.observation_channels))
 
         self._model = None
         self.running_score = None
@@ -179,7 +191,36 @@ class RogSimSingleAgentEnv(gym.Env):
             self.running_score = self.get_current_game_score(include_vaccine_score=True)
         self.cumulative_reward = 0
         # return observation
-        return self._model.get_observation()
+
+        _observation = self._model.get_observation()
+
+        _observation = self._post_process_observation(_observation)
+        return _observation
+
+    def _post_process_observation(self, observation):
+        """
+        Channel 1 : Is the cell Susceptible
+        Channel 2 : Is an agent in this cell exposed/infected at some point 
+        Channel 3 : Is an agent in this cell Vaccinated
+        Channel 4 : Is the vaccination agent here
+
+        """
+        vaccination_agent_channel = np.zeros((self.width, self.height))
+        vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
+
+        INFECTED_CHANNEL = observation[... , AgentState.EXPOSED.value] + \
+            observation[... , AgentState.SYMPTOMATIC.value] + \
+            observation[... , AgentState.INFECTIOUS.value] + \
+            observation[... , AgentState.RECOVERED.value]
+
+        p_obs = np.array([
+            observation[... , AgentState.SUSCEPTIBLE.value],
+            INFECTED_CHANNEL,
+            observation[... , AgentState.VACCINATED.value],
+            vaccination_agent_channel]
+        )
+
+        return p_obs
 
     def initialize_renderer(self, mode="human"):
         if mode in ["human", "rgb_array"]:
@@ -360,13 +401,15 @@ class RogSimSingleAgentEnv(gym.Env):
             """
             self.vacc_agent_y -= 1
             self.vacc_agent_y %= self.height
-        
+            _observation = self._model.get_observation()
+
         elif action == ActionType.MOVE_E.value:
             """
             Handle MOVE_E action
             """
             self.vacc_agent_x += 1
             self.vacc_agent_x %= self.width
+            _observation = self._model.get_observation()
 
         elif action == ActionType.MOVE_S.value:
             """
@@ -374,13 +417,15 @@ class RogSimSingleAgentEnv(gym.Env):
             """
             self.vacc_agent_y += 1
             self.vacc_agent_y %= self.height
-        
+            _observation = self._model.get_observation()
+
         elif action == ActionType.MOVE_W.value:
             """
             Handle MOVE_W action
             """
             self.vacc_agent_x -= 1
             self.vacc_agent_x %= self.width
+            _observation = self._model.get_observation()
 
 
         # Compute difference in game score
@@ -406,6 +451,8 @@ class RogSimSingleAgentEnv(gym.Env):
         
         _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
+        
+        _observation = self._post_process_observation(_observation)
         return _observation, _step_reward, _done, _info
 
     def dummy_env_step(self):
@@ -455,7 +502,7 @@ if __name__ == "__main__":
     env_config = dict(
                     width=20,
                     height=20,
-                    population_density=0.1,
+                    population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
                     initial_vaccination_fraction=0,
@@ -502,6 +549,7 @@ if __name__ == "__main__":
 
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
+        print(observation.shape)
         env.render(mode=render)
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
