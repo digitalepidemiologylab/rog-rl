@@ -1,6 +1,7 @@
 import numpy as np
 
 from rog_rl.agent_state import AgentState
+from rog_rl.vaccination_response import VaccinationResponse
 from scipy.stats import truncnorm
 from scipy.signal import convolve2d
 from collections import deque
