@@ -1,6 +1,7 @@
 import numpy as np
 
 from rog_rl.agent_state import AgentState
+from scipy.stats import truncnorm
 from scipy.signal import convolve2d
 from collections import deque
 
@@ -102,7 +103,7 @@ class DiseaseSimModel:
         self.exposure_tvals = np.zeros(self.gridshape)
         self.latent_tvals = self._sample_tvals(latent_period_mu,
                                               latent_period_sigma,
-                                              0)
+                                              self.exposure_tvals)
         self.incubation_tvals = self._sample_tvals(incubation_period_mu,
                                               incubation_period_sigma,
                                               self.latent_tvals)
@@ -115,27 +116,38 @@ class DiseaseSimModel:
                                 AgentState.SYMPTOMATIC: [AgentState.RECOVERED, self.recovery_tvals],}
         # Infect
         n_infect = int(self.initial_infection_fraction * self.n_agents)
-        infect_locs = self.rng.choice(np.arange(self.width * self.height), 
+        infect_list = self.rng.choice(np.arange(self.width * self.height), 
                                        size=n_infect, replace=False)       
-        infect_locs = (infect_locs // self.width, infect_locs % self.height)
+        infect_locs = (infect_list // self.width, infect_list % self.height)
         self.infection_scheduled_grid[infect_locs] = True
         self.infection_base_time_grid[infect_locs] = self.schedule_steps
-        self.observation[self.infection_scheduled_grid, AgentState.SUSCEPTIBLE.value] = 0
+        self.observation[self.infection_scheduled_grid] = 0
         self.observation[self.infection_scheduled_grid, AgentState.EXPOSED.value] = 1
                              
         # Initial vaccinate  - Skipped for now - Ignore locations infected and vaccinate in similar manner
-        n_vaccine_init = 0
+        n_vaccine_init = int(self.initial_vaccination_fraction * self.n_agents)
+        not_infected = list(set(np.arange(self.width * self.height)) - set(infect_list))
+        vaccinate_list = self.rng.choice(not_infected, size=n_vaccine_init, replace=False)
+        vaccinate_locs = (vaccinate_list // self.width, vaccinate_list % self.height)
+        vaccinate_mask = np.zeros(self.gridshape, dtype=np.bool)
+        vaccinate_mask[vaccinate_locs] = True
+        self.observation[vaccinate_mask] = 0
+        self.observation[vaccinate_mask, AgentState.VACCINATED.value] = 1
         self.max_vaccines = self.n_vaccines + n_vaccine_init
                             
     def _sample_tvals(self, mu, sigma, minvals):
         minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
-        a = (minv - mu) / sigma 
+        if sigma > 0:
+            a = (minv - mu) / sigma 
+        else:
+            a = (minv - mu) * np.inf
 #         maxv = np.inf
 #         b = (maxv - mu) / sigma
         b = np.zeros_like(a) + np.inf
-        # truncnorm.rvs can draw from a 1D array of distributions - but the size parameter doesn't work in that case
+        # truncnorm.rvs can draw from a 1D array of distributions - 
+        # But the size parameter doesn't work in multi distribution
         t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
-        tvals = np.int32(t.reshape(self.gridshape)
+        tvals = np.int32(t.reshape(self.gridshape))
         return tvals
    
     ###########################################################################

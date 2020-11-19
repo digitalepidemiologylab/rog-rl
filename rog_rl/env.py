@@ -8,7 +8,7 @@ import numpy as np
 
 from rog_rl.agent_state import AgentState
 # from rog_rl.model import DiseaseSimModel
-from rog_rl.model_np import DiseaseSimModel
+# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 
@@ -39,6 +39,7 @@ class RogSimEnv(gym.Env):
                         "recovery_period_sigma": 0,
                     },
                     vaccine_score_weight=-1,
+                    use_np_model=False,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -57,6 +58,13 @@ class RogSimEnv(gym.Env):
 
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
+        
+        if self.config['use_np_model']:
+            from rog_rl.model_np import DiseaseSimModel
+        else:
+            from rog_rl.model import DiseaseSimModel
+        self.disease_model = DiseaseSimModel
+            
 
         self.action_space = spaces.MultiDiscrete(
             [
@@ -126,7 +134,7 @@ class RogSimEnv(gym.Env):
         """
         _simulator_instance_seed = self.np_random.randint(4294967296)
         # Instantiate Disease Model
-        self._model = DiseaseSimModel(
+        self._model = self.disease_model(
             width, height,
             population_density, vaccine_density,
             initial_infection_fraction, initial_vaccination_fraction,
@@ -144,7 +152,8 @@ class RogSimEnv(gym.Env):
             self._model.n_vaccines
         
 #         Tick model
-#         self._model.tick() # Not needed for model_np
+        if not self.config["use_np_model"]:
+            self._model.tick() # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
