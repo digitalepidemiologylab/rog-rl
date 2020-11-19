@@ -116,6 +116,8 @@ class RogSimSingleAgentEnv(gym.Env):
         self.vacc_agent_x = 0
         self.vacc_agent_y = 0
 
+        self._game_steps = 0
+
     def set_renderer(self, renderer):
         self.use_renderer = renderer
         if self.use_renderer:
@@ -175,6 +177,7 @@ class RogSimSingleAgentEnv(gym.Env):
         self.vacc_agent_x = self.np_random.randint(self.width)
         self.vacc_agent_y = self.np_random.randint(self.height)
         
+        self._game_steps = 1
         # Set the max timesteps of an env as the sum of :
         # - max_simulation_timesteps
         # - Number of Vaccines available
@@ -261,7 +264,6 @@ class RogSimSingleAgentEnv(gym.Env):
         _simulation_steps = int(scheduler.steps)
 
         # Game Steps includes steps in which each agent is vaccinated
-        _game_steps = _simulation_steps + _vaccines_given
 
         self.renderer.update_stats(
                     "SCORE",
@@ -270,7 +272,7 @@ class RogSimSingleAgentEnv(gym.Env):
             model.n_vaccines))
         self.renderer.update_stats("SIMULATION_TICKS", "{}".format(
             _simulation_steps))
-        self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
+        self.renderer.update_stats("GAME_TICKS", "{}".format(self._game_steps))
 
         # Add VACC_AGENT coords to render state
         self.renderer.update_stats(
@@ -365,7 +367,7 @@ class RogSimSingleAgentEnv(gym.Env):
 
         if self.debug:
             print("Action : ", action)
-
+        
         _observation = False
         _done = False
         _info = {}
@@ -451,6 +453,10 @@ class RogSimSingleAgentEnv(gym.Env):
         
         _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
+
+        self._game_steps += 1
+        if self._game_steps > self._max_episode_steps:
+            _done = True
         
         _observation = self._post_process_observation(_observation)
         return _observation, _step_reward, _done, _info

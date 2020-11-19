@@ -451,7 +451,10 @@ class ANSIRenderer:
                 _state = None if _agent is None else _agent.state
 
                 if self.stats["VACC_AGENT_X"] is not None and self.stats["VACC_AGENT_Y"] is not None:
-                    if str(_x) == self.stats["VACC_AGENT_X"] and str(_y) == self.stats["VACC_AGENT_Y"]:
+                    # TODO: Some x-y referencing issue here, hence 
+                    # we are using vacc_agent_x == _y comparison
+                    # Needs some investigation.
+                    if str(_y) == self.stats["VACC_AGENT_X"] and str(_x) == self.stats["VACC_AGENT_Y"]:
                         _char = "▄()"
                     else:
                         _char = "▄▄"
