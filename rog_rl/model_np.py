@@ -128,10 +128,14 @@ class DiseaseSimModel:
         self.max_vaccines = self.n_vaccines + n_vaccine_init
                             
     def _sample_tvals(self, mu, sigma, minvals):
-        tvals = np.int32(self.rng.normal(mu, sigma, size=self.gridshape))
-        # This won't generate same distribution as the while loop resampling
-        # Need to sample from truncated normal distribution - Check scipy.stats.truncnorm
-        tvals = minvals + np.abs(minvals - tvals - 1) 
+        minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
+        a = (minv - mu) / sigma 
+#         maxv = np.inf
+#         b = (maxv - mu) / sigma
+        b = np.zeros_like(a) + np.inf
+        # truncnorm.rvs can draw from a 1D array of distributions - but the size parameter doesn't work in that case
+        t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
+        tvals = np.int32(t.reshape(self.gridshape)
         return tvals
    
     ###########################################################################
