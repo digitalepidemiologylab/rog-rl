@@ -218,7 +218,7 @@ class RogSimSingleAgentEnv(gym.Env):
             INFECTED_CHANNEL,
             observation[... , AgentState.VACCINATED.value],
             vaccination_agent_channel]
-        )
+        ).T
 
         return p_obs
 
@@ -550,7 +550,7 @@ if __name__ == "__main__":
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
         print(observation.shape)
-        env.render(mode=render)
+        # env.render(mode=render)
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
         print("="*100)
