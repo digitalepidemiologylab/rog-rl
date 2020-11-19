@@ -429,8 +429,19 @@ class RogSimSingleAgentEnv(gym.Env):
             self.vacc_agent_x %= self.width
             _observation = self._model.get_observation()
 
+        _done = not self._model.is_running()
+
+        self._game_steps += 1
+        if self._game_steps > self._max_episode_steps:
+            # When we run out of game steps
+            # ensure that the sim model runs till completion.
+            _done = True
+            while self._model.is_running():
+                self._model.tick()
+                _observation = self._model.get_observation()
 
         # Compute difference in game score
+
         if self.vaccine_score_weight < 0:
             current_score = self.get_current_game_score(include_vaccine_score=False)
             _step_reward = current_score - self.running_score
@@ -452,11 +463,6 @@ class RogSimSingleAgentEnv(gym.Env):
             _info[_key] = game_metrics[_key]
         
         _info['cumulative_reward'] = self.cumulative_reward
-        _done = not self._model.is_running()
-
-        self._game_steps += 1
-        if self._game_steps > self._max_episode_steps:
-            _done = True
         
         _observation = self._post_process_observation(_observation)
         return _observation, _step_reward, _done, _info
