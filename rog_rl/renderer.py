@@ -374,7 +374,10 @@ class ANSIRenderer:
             "SCORE": -1.0,
             "VACCINE_BUDGET": 1.0,
             "SIMULATION_TICKS": 0,
-            "GAME_TICKS": 0
+            "GAME_TICKS": 0,
+
+            "VACC_AGENT_X" : None,
+            "VACC_AGENT_Y" : None
         }
         # Setup Agent State Metrics
         for _state in AgentState:
@@ -446,7 +449,14 @@ class ANSIRenderer:
             for _x in range(grid.width):
                 _agent = grid[_y][_x]
                 _state = None if _agent is None else _agent.state
-                render_string += self._get_cell_string(_state)
+
+                if self.stats["VACC_AGENT_X"] is not None and self.stats["VACC_AGENT_Y"] is not None:
+                    if str(_x) == self.stats["VACC_AGENT_X"] and str(_y) == self.stats["VACC_AGENT_Y"]:
+                        _char = "▄()"
+                    else:
+                        _char = "▄▄"
+                
+                render_string += self._get_cell_string(_state, _char=_char)
             render_string += "║\n"
         render_string += "╚"+"═══"*(grid.width+1) + "╝"
         return render_string

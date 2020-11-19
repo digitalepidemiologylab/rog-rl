@@ -231,6 +231,17 @@ class RogSimSingleAgentEnv(gym.Env):
             _simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
 
+        # Add VACC_AGENT coords to render state
+        self.renderer.update_stats(
+            "VACC_AGENT_X",
+            str(self.vacc_agent_x)
+        )
+        self.renderer.update_stats(
+            "VACC_AGENT_Y",
+            str(self.vacc_agent_y)
+        )
+
+
         for _state in AgentState:
             key = "population.{}".format(_state.name)
             stats = state_metrics[key]
@@ -444,7 +455,7 @@ if __name__ == "__main__":
     env_config = dict(
                     width=20,
                     height=20,
-                    population_density=0.75,
+                    population_density=0.1,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
                     initial_vaccination_fraction=0,
