@@ -40,6 +40,7 @@ class DiseaseSimModel:
         },
         max_timesteps=200,
         early_stopping_patience=14,
+        only_count_successful_vaccines=True,
         toric=True,
         seed=None
     ):
@@ -65,6 +66,7 @@ class DiseaseSimModel:
         self.early_stopping_patience = early_stopping_patience
         self.toric = toric
         self.seed = seed
+        self.only_count_successful_vaccines = only_count_successful_vaccines
         
         self.last_n_susceptible_fractions = deque(maxlen=early_stopping_patience)
         
@@ -199,13 +201,16 @@ class DiseaseSimModel:
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
-        self.n_vaccines -= 1
+        if not self.only_count_successful_vaccines:
+            self.n_vaccines -= 1
 
         agent_state = np.argmax(self.observation[cell_x, cell_y])
         if agent_state == AgentState.SUSCEPTIBLE.value:
             # Case 2 : Agent is susceptible, and can be vaccinated
             self.observation[cell_x, cell_y] = 0
             self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
+            if self.only_count_successful_vaccines:
+                self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
         elif agent_state == AgentState.EXPOSED.value:
             # Case 3 : Agent is already exposed, and its a waste of vaccination
@@ -280,8 +285,10 @@ class DiseaseSimModel:
                      self.observation[..., AgentState.SYMPTOMATIC.value]
         infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1, 
                                          mode='same')
-        p = np.zeros(self.gridshape) + self.prob_infection
-        infection_prob_allneighbours = p * (1-p**infected_neighbours)/ (1-p) # GP Series if all prob_infection are same
+#         p = np.zeros(self.gridshape) + self.prob_infection
+        p = self.prob_infection
+        # GP Series if all prob_infection are same --> p + p*(1-p) + p*(1-p)^2 + ... p*(1-p)^(n-1)
+        infection_prob_allneighbours = 1-(1-p)**infected_neighbours
         infected = self.rng.rand(*self.gridshape,) < infection_prob_allneighbours
         already_infected = self.infection_scheduled_grid
         infected = np.logical_and(infected, ~already_infected)

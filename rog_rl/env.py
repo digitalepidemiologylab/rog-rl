@@ -38,6 +38,7 @@ class RogSimEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
+                    only_count_successful_vaccines=False,
                     vaccine_score_weight=-1,
                     use_np_model=False,
                     max_simulation_timesteps=200,
@@ -117,6 +118,8 @@ class RogSimEnv(gym.Env):
         prob_agent_movement = self.config['prob_agent_movement']
         disease_planner_config = self.config['disease_planner_config']
         max_simulation_timesteps = self.config['max_simulation_timesteps']
+        only_count_successful_vaccines = \
+            self.config['only_count_successful_vaccines']
         early_stopping_patience = \
             self.config['early_stopping_patience']
         toric = self.config['toric']
@@ -141,6 +144,7 @@ class RogSimEnv(gym.Env):
             prob_infection, prob_agent_movement,
             disease_planner_config,
             max_simulation_timesteps, early_stopping_patience,
+            only_count_successful_vaccines,
             toric, seed=_simulator_instance_seed
         )
 
@@ -279,6 +283,10 @@ class RogSimEnv(gym.Env):
 
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
+        # Add "Protected" and "Affected"
+        _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
+                                     _d["population.VACCINATED"]
+        _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
         # Add R0 to the game metrics
 #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
