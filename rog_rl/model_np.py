@@ -65,6 +65,7 @@ class DiseaseSimModel:
         self.max_timesteps = max_timesteps
         self.early_stopping_patience = early_stopping_patience
         self.toric = toric
+        self.boundary = 'wrap' if toric else 'fill'
         self.seed = seed
         self.only_count_successful_vaccines = only_count_successful_vaccines
         
@@ -284,7 +285,7 @@ class DiseaseSimModel:
         infectious = self.observation[..., AgentState.INFECTIOUS.value] + \
                      self.observation[..., AgentState.SYMPTOMATIC.value]
         infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1, 
-                                         mode='same')
+                                         mode='same', boundary=self.boundary)
 #         p = np.zeros(self.gridshape) + self.prob_infection
         p = self.prob_infection
         # GP Series if all prob_infection are same --> p + p*(1-p) + p*(1-p)^2 + ... p*(1-p)^(n-1)
