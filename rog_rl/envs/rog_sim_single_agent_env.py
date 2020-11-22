@@ -21,10 +21,10 @@ class ActionType(Enum):
 
 class RogSimSingleAgentEnv(gym.Env):
     """
-    A single agent env contains a single 
-    vaccination agent which can move around the grid 
-    and apart from choose to vaccinate any cell 
-    or 
+    A single agent env contains a single
+    vaccination agent which can move around the grid
+    and apart from choose to vaccinate any cell
+    or
     step ahead in the internal disease simulator.
     """
 
@@ -68,28 +68,28 @@ class RogSimSingleAgentEnv(gym.Env):
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
 
         """
-        The action space is composed of 5 discrete actions : 
+        The action space is composed of 5 discrete actions :
 
         MOVE_N : Moves the vaccination-agent north
         MOVE_E : Moves the vaccination-agent east
         MOVE_W : Moves the vaccination-agent west
         MOVE_S : Moves the vaccination-agent south
-        
+
         VACCINATE : Vaccinates the current location of the vaccination-agent
-        SIM_TICK : adds a simulation tick to the disease model 
+        SIM_TICK : adds a simulation tick to the disease model
         """
         self.action_space = spaces.Discrete(
             len(ActionType)
         )
 
-        # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated 
+        # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated
 
         """
         The observation space in this case will be of shape (width, height, 3)
         where we represent 4 channels of information across the grid
 
         Channel 1 : Is the cell Susceptible
-        Channel 2 : Is an agent in this cell exposed/infected at some point 
+        Channel 2 : Is an agent in this cell exposed/infected at some point
         Channel 3 : Is an agent in this cell Vaccinated
         Channel 4 : Is the vaccination agent here
         """
@@ -176,7 +176,7 @@ class RogSimSingleAgentEnv(gym.Env):
         # Initialize location of vaccination agent
         self.vacc_agent_x = self.np_random.randint(self.width)
         self.vacc_agent_y = self.np_random.randint(self.height)
-        
+
         self._game_steps = 1
         # Set the max timesteps of an env as the sum of :
         # - max_simulation_timesteps
@@ -184,9 +184,9 @@ class RogSimSingleAgentEnv(gym.Env):
 
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
-        
+
         # Tick model
-        self._model.tick() 
+        self._model.tick()
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -203,7 +203,7 @@ class RogSimSingleAgentEnv(gym.Env):
     def _post_process_observation(self, observation):
         """
         Channel 1 : Is the cell Susceptible
-        Channel 2 : Is an agent in this cell exposed/infected at some point 
+        Channel 2 : Is an agent in this cell exposed/infected at some point
         Channel 3 : Is an agent in this cell Vaccinated
         Channel 4 : Is the vaccination agent here
 
@@ -234,7 +234,7 @@ class RogSimSingleAgentEnv(gym.Env):
             self.renderer = Renderer(
                     grid_size=(self.width, self.height)
                 )
-        else:
+        elif mode in ["ansi"]:
             """
             Initialize ANSI Renderer here
             """
@@ -242,6 +242,18 @@ class RogSimSingleAgentEnv(gym.Env):
                              'video.frames_per_second': 5}
             from rog_rl.renderer import ANSIRenderer
             self.renderer = ANSIRenderer()
+
+        elif mode in ["PIL"]:
+            """
+            Initialize PIL Headless Renderer here for visualising during training
+            """
+            self.metadata = {'render.modes': ['PIL'],
+                             'video.frames_per_second': 5}
+            from rog_rl.renderer import PILRenderer
+            self.renderer = PILRenderer(grid_size=(self.width, self.height))
+        else:
+            print("Invalid Mode selected for render:",mode)
+
         self.renderer.setup(mode=mode)
 
     def update_renderer(self, mode='human'):
@@ -334,7 +346,7 @@ class RogSimSingleAgentEnv(gym.Env):
         if include_vaccine_score:
             score += self._model.get_population_fraction_by_state(
                         AgentState.VACCINATED)
-        
+
         return score
 
     def get_current_game_metrics(self, dummy_simulation=False):
@@ -367,7 +379,7 @@ class RogSimSingleAgentEnv(gym.Env):
 
         if self.debug:
             print("Action : ", action)
-        
+
         _observation = False
         _done = False
         _info = {}
@@ -383,7 +395,7 @@ class RogSimSingleAgentEnv(gym.Env):
             """
             Handle VACCINATE action
             """
-            # Vaccinate the cell where the vaccination agent currently is 
+            # Vaccinate the cell where the vaccination agent currently is
             cell_x = self.vacc_agent_x
             cell_y = self.vacc_agent_y
             vaccination_success, response = \
@@ -396,7 +408,7 @@ class RogSimSingleAgentEnv(gym.Env):
                 while self._model.is_running():
                     self._model.tick()
                     _observation = self._model.get_observation()
-            
+
         elif action == ActionType.MOVE_N.value:
             """
             Handle MOVE_N action
@@ -461,9 +473,9 @@ class RogSimSingleAgentEnv(gym.Env):
         game_metrics = self.get_current_game_metrics()
         for _key in game_metrics.keys():
             _info[_key] = game_metrics[_key]
-        
+
         _info['cumulative_reward'] = self.cumulative_reward
-        
+
         _observation = self._post_process_observation(_observation)
         return _observation, _step_reward, _done, _info
 
@@ -510,10 +522,10 @@ class RogSimSingleAgentEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "ansi"  # change to "human"
+    render = "PIL" # "ansi"  # change to "human"
     env_config = dict(
-                    width=20,
-                    height=20,
+                    width=3,
+                    height=6,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
@@ -537,7 +549,7 @@ if __name__ == "__main__":
                     debug=True)
     env = RogSimSingleAgentEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
-    record = False
+    record = True
     if record:
         # records the the rendering in the `recording` folder
         env = wrappers.Monitor(env, "recording", force=True)
@@ -547,7 +559,7 @@ if __name__ == "__main__":
     env.render(mode=render)
     while not done:
         print("""
-        Valid Actions : 
+        Valid Actions :
             MOVE_N = 0
             MOVE_E = 1
             MOVE_W = 2
@@ -562,7 +574,7 @@ if __name__ == "__main__":
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
         print(observation.shape)
-        # env.render(mode=render)
+        env.render(mode=render)
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
         print("="*100)

@@ -5,7 +5,6 @@ from gym.utils import seeding
 from enum import Enum
 import numpy as np
 
-
 from rog_rl.agent_state import AgentState
 from rog_rl.model import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
@@ -142,7 +141,7 @@ class RogSimEnv(gym.Env):
 
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
-        
+
 #         Tick model
 #         self._model.tick() # Not needed for model_np
 
@@ -163,7 +162,7 @@ class RogSimEnv(gym.Env):
             self.renderer = Renderer(
                     grid_size=(self.width, self.height)
                 )
-        else:
+        elif mode in ["ansi"]:
             """
             Initialize ANSI Renderer here
             """
@@ -171,6 +170,18 @@ class RogSimEnv(gym.Env):
                              'video.frames_per_second': 5}
             from rog_rl.renderer import ANSIRenderer
             self.renderer = ANSIRenderer()
+
+        elif mode in ["PIL"]:
+            """
+            Initialize PIL Headless Renderer here for visualising during training
+            """
+            self.metadata = {'render.modes': ['PIL'],
+                             'video.frames_per_second': 5}
+            from rog_rl.renderer import PILRenderer
+            self.renderer = PILRenderer(grid_size=(self.width, self.height))
+        else:
+            print("Invalid Mode selected for render:",mode)
+
         self.renderer.setup(mode=mode)
 
     def update_renderer(self, mode='human'):
@@ -253,7 +264,7 @@ class RogSimEnv(gym.Env):
         if include_vaccine_score:
             score += self._model.get_population_fraction_by_state(
                         AgentState.VACCINATED)
-        
+
         return score
 
     def get_current_game_metrics(self, dummy_simulation=False):
@@ -331,7 +342,7 @@ class RogSimEnv(gym.Env):
         game_metrics = self.get_current_game_metrics()
         for _key in game_metrics.keys():
             _info[_key] = game_metrics[_key]
-        
+
         _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
         return _observation, _step_reward, _done, _info
@@ -379,7 +390,7 @@ class RogSimEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "ansi"  # change to "human"
+    render = "PIL" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
                     height=5,
@@ -405,26 +416,31 @@ if __name__ == "__main__":
                     debug=True)
     env = RogSimEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
-    record = False
+    record = True
     if record:
         # records the the rendering in the `recording` folder
         env = wrappers.Monitor(env, "recording", force=True)
+
     observation = env.reset()
     done = False
     k = 0
-    env.render(mode=render)
+
+    if not record:
+        env.render(mode=render)
     while not done:
-        _action = input("Enter action - ex: [1, 4, 2] : ")
-        if _action.strip() == "":
-            _action = env.action_space.sample()
-        else:
-            _action = [int(x) for x in _action.split()]
-            assert _action[0] in [0, 1]
-            assert _action[1] in list(range(env._model.width))
-            assert _action[2] in list(range(env._model.height))
+        _action = env.action_space.sample()
+        # _action = input("Enter action - ex: [1, 4, 2] : ")
+        # if _action.strip() == "":
+        #     _action = env.action_space.sample()
+        # else:
+        #     _action = [int(x) for x in _action.split()]
+        #     assert _action[0] in [0, 1]
+        #     assert _action[1] in list(range(env._model.width))
+        #     assert _action[2] in list(range(env._model.height))
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
-        env.render(mode=render)
+        if not record:
+            env.render(mode=render)
         k += 1
 
         # print(observation.shape)
