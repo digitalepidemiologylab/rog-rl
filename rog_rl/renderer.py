@@ -11,6 +11,7 @@ from rog_rl.colors import Colors, ColorMap
 from rog_rl.agent_state import AgentState
 
 from gym.envs.classic_control import rendering
+from PIL import Image, ImageDraw, ImageFont
 
 
 class Renderer:
@@ -20,6 +21,7 @@ class Renderer:
         self.COLORS = Colors()
         self.COLOR_MAP = ColorMap()
         self.setup_constants()
+        self.calculate_constants()
         self.setup_stats()
 
         self.screen = None
@@ -33,6 +35,10 @@ class Renderer:
         self.TOP_PANEL_HEIGHT = 20
         self.MARGIN = 5
 
+        self.MOUSE_HIGHLIGHTER_WIDTH = 3
+
+    def calculate_constants(self):
+
         # CELL_PROPERTIES
         self.CELL_WIDTH = int(800 / self.get_grid_width())
         self.CELL_HEIGHT = int(800 / self.get_grid_height())
@@ -40,8 +46,6 @@ class Renderer:
 
         self.STATE_CELL_WIDTH = self.CELL_WIDTH - 2 * self.CELL_PADDING
         self.STATE_CELL_HEIGHT = self.CELL_HEIGHT - 2 * self.CELL_PADDING
-
-        self.MOUSE_HIGHLIGHTER_WIDTH = 3
 
         # GRID_PROPERTIES
         self.GRID_BASE_X = self.MARGIN + self.CONTROL_PANEL_WIDTH \
@@ -95,6 +99,13 @@ class Renderer:
             self.screen = rendering.Viewer(self.WIDTH,
                                            self.HEIGHT)
             glClearColor(*self.convert_gym_color(self.COLORS.WHITE), 1)
+
+    # TODO: Not working via function
+    def add_text(self, text_string,font_size, x, y , color):
+        return pyglet.text.Label(text_string,
+                                    font_size,
+                                    x, y,
+                                    (*color, 255))
 
     def draw_stats(self):
         top_x = self.MARGIN
@@ -205,7 +216,6 @@ class Renderer:
             _text_string += _state
 
             _font_size = int(self.AGENT_STATUS_FONT_SIZE)
-            _color = (*_state_text_color, 255)
 
             dict_texts[_text_string] = pyglet.text.Label(_text_string,
                                                          font_size=_font_size,
@@ -263,6 +273,41 @@ class Renderer:
             self.draw_standard_line(
                 color,
                 start_coord, end_coord)
+
+        if self.stats.get("VACC_AGENT_X") is not None and self.stats.get("VACC_AGENT_Y") is not None:
+            # TODO: Some x-y referencing issue here, hence
+            # we are using vacc_agent_x == _y comparison
+            # Needs some investigation.
+            self.draw_vaccine_agent(self.stats.get("VACC_AGENT_X"),
+                                    self.stats.get("VACC_AGENT_Y"),color)
+
+
+    def draw_vaccine_agent(self, cell_x, cell_y, color=False):
+        if not color:
+            color = self.COLORS.BLUE
+        cell_base = self.get_cell_base(int(self.stats["VACC_AGENT_X"]),
+                        int(self.stats["VACC_AGENT_Y"]))
+        start_coord = (
+            cell_base[0],
+            cell_base[1]
+        )
+        end_coord = (
+            cell_base[0] + self.CELL_WIDTH,
+            cell_base[1] + self.CELL_HEIGHT
+        )
+        self.draw_shape(start_coord, end_coord, color)
+
+    def draw_shape(self, start_coord, end_coord, color):
+        # Draws Triangle
+        diameter = min(self.CELL_WIDTH,self.CELL_HEIGHT)
+
+        polygon = rendering.FilledPolygon([
+                start_coord,
+                (start_coord[0] + self.CELL_WIDTH, start_coord[1]),
+                (start_coord[0] + self.CELL_WIDTH//2 , start_coord[1] + self.CELL_HEIGHT)
+            ])
+        polygon.set_color(*self.convert_gym_color(color))
+        self.screen.add_geom(polygon)
 
     def draw_cell(self, cell_x, cell_y, color=False):
         cell_base = self.get_cell_base(cell_x, cell_y)
@@ -374,7 +419,10 @@ class ANSIRenderer:
             "SCORE": -1.0,
             "VACCINE_BUDGET": 1.0,
             "SIMULATION_TICKS": 0,
-            "GAME_TICKS": 0
+            "GAME_TICKS": 0,
+
+            "VACC_AGENT_X" : None,
+            "VACC_AGENT_Y" : None
         }
         # Setup Agent State Metrics
         for _state in AgentState:
@@ -446,7 +494,17 @@ class ANSIRenderer:
             for _x in range(grid.width):
                 _agent = grid[_y][_x]
                 _state = None if _agent is None else _agent.state
-                render_string += self._get_cell_string(_state)
+                _char = "▄▄"
+                if self.stats["VACC_AGENT_X"] is not None and self.stats["VACC_AGENT_Y"] is not None:
+                    # TODO: Some x-y referencing issue here, hence
+                    # we are using vacc_agent_x == _y comparison
+                    # Needs some investigation.
+                    if str(_y) == self.stats["VACC_AGENT_X"] and str(_x) == self.stats["VACC_AGENT_Y"]:
+                        _char = "▄()"
+                    else:
+                        _char = "▄▄"
+
+                render_string += self._get_cell_string(_state, _char=_char)
             render_string += "║\n"
         render_string += "╚"+"═══"*(grid.width+1) + "╝"
         return render_string
@@ -464,38 +522,212 @@ class ANSIRenderer:
         pass
 
 
+class PILRenderer(Renderer):
+
+    def setup_constants(self):
+
+        self.AGENT_STATUS_FONT_SIZE = 20
+        self.AGENT_STATUS_LINE_SPACE = 20
+
+        self.CONTROL_PANEL_WIDTH = 300
+        self.TOP_PANEL_HEIGHT = 0
+        self.MARGIN = 5
+
+    def setup(self, mode="PIL"):
+        dim = max(self.GRID_MAX_Y,self.GRID_MAX_X)
+        self.image = Image.new("RGB", (dim,dim), (255, 255, 255))
+        self.draw = ImageDraw.Draw(self.image)
+
+    def close(self):
+        del self.draw
+        del self.image
+
+    def add_text(self, text_string, font_size, x, y, color):
+        font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", font_size)
+        self.draw.text((x,y), text_string, font=font, fill=color)
+
+    def draw_stats(self):
+        top_x = self.MARGIN
+        top_y = self.GRID_MAX_Y - \
+            (self.GRID_BASE_Y + self.MARGIN + self.AGENT_STATUS_FONT_SIZE
+                + 2 + self.AGENT_STATUS_LINE_SPACE)
+        ################################################################
+        ################################################################
+        dict_texts = {}
+
+        # Simulation Statistics Header
+        _text_string = "Simulation Statistics"
+
+        _state_text_color = self.COLOR_MAP.get_color("AGENT_STATE_TEXT_COLOR")
+
+        dict_texts[_text_string] = self.add_text(
+                                    _text_string,
+                                    font_size=int(
+                                                self.AGENT_STATUS_FONT_SIZE
+                                                + 2),
+                                    x=top_x, y=top_y,
+                                    color=_state_text_color)
+
+        top_y -= self.AGENT_STATUS_LINE_SPACE + self.AGENT_STATUS_FONT_SIZE
+        ################################################################
+        ################################################################
+        # Line
+        ################################################################
+        rect_base_x = top_x
+        rect_base_y = top_y
+
+        rect_width = self.CONTROL_PANEL_WIDTH
+        rect_height = 2
+
+        self.draw_standard_rect(_state_text_color, (
+            rect_base_x, rect_base_x + rect_width,
+            rect_base_y + rect_height, rect_base_y
+        ))
+
+        top_y -= 2 * rect_height + self.AGENT_STATUS_LINE_SPACE
+        ################################################################
+        ################################################################
+        # Render AgentState Values
+        ################################################################
+
+        for _state in AgentState:
+            _key = "population.{}".format(_state.name)
+            _text_string = str(self.stats[_key])  # This can be refactored
+            _text_string += " "
+            _text_string += _state.name
+
+            _font_size = int(self.AGENT_STATUS_FONT_SIZE)
+            dict_texts[_text_string] = \
+                self.add_text(_text_string, font_size=_font_size,
+                                  x=top_x, y=top_y,
+                                  color=self.COLOR_MAP.get_color(_state))
+
+            top_y -= self.AGENT_STATUS_LINE_SPACE + self.AGENT_STATUS_FONT_SIZE
+        ################################################################
+        ################################################################
+        # Line
+        ################################################################
+        rect_base_x = top_x
+        rect_base_y = top_y
+
+        rect_width = self.CONTROL_PANEL_WIDTH
+        rect_height = 2
+
+        self.draw_standard_rect(
+            self.COLOR_MAP.get_color("AGENT_STATE_TEXT_COLOR"), (
+                rect_base_x, rect_base_x + rect_width,
+                rect_base_y + rect_height, rect_base_y))
+
+        top_y -= 2 * rect_height + self.AGENT_STATUS_LINE_SPACE
+        ################################################################
+        ################################################################
+        # Simulation Progress Header
+        _text_string = "Progress"
+        _font_size = int(self.AGENT_STATUS_FONT_SIZE + 2)
+        dict_texts[_text_string] = self.add_text(_text_string,
+                                                     font_size=_font_size,
+                                                     x=top_x, y=top_y,
+                                                     color=_state_text_color)
+
+        top_y -= self.AGENT_STATUS_LINE_SPACE + self.AGENT_STATUS_FONT_SIZE
+        ################################################################
+        ################################################################
+        # Line
+        ################################################################
+        rect_base_x = top_x
+        rect_base_y = top_y
+
+        rect_width = self.CONTROL_PANEL_WIDTH
+        rect_height = 2
+
+        _state_text_color = self.COLOR_MAP.get_color("AGENT_STATE_TEXT_COLOR")
+        self.draw_standard_rect(_state_text_color, (
+            rect_base_x, rect_base_x + rect_width,
+            rect_base_y + rect_height, rect_base_y
+        ))
+
+        top_y -= 2 * rect_height + self.AGENT_STATUS_LINE_SPACE
+        for _state in ["SIMULATION_TICKS", "GAME_TICKS", "VACCINE_BUDGET"]:
+            _text_string = str(self.stats[_state])
+            _text_string += " "
+            _text_string += _state
+
+            _font_size = int(self.AGENT_STATUS_FONT_SIZE)
+
+            dict_texts[_text_string] = self.add_text(_text_string,
+                                                         font_size=_font_size,
+                                                         x=top_x, y=top_y,
+                                                         color=_state_text_color)
+
+            top_y -= self.AGENT_STATUS_LINE_SPACE + self.AGENT_STATUS_FONT_SIZE
+
+        _text_string = "Step Reward"
+        _text_string += ":"
+        _text_string += str(self.stats['SCORE'])
+        _font_size = int(self.AGENT_STATUS_FONT_SIZE+2)
+        _x = self.MARGIN
+        _y = self.HEIGHT - self.MARGIN - self.AGENT_STATUS_FONT_SIZE
+        dict_texts[_text_string] = self.add_text(
+                                    _text_string, font_size=_font_size,
+                                    x=_x,
+                                    y=_y,
+                                    color=self.COLORS.RED)
+
+    def draw_standard_line(self, color, start_coord, end_coord):
+        self.draw.line((start_coord,end_coord), fill=color)
+
+    def draw_standard_rect(self, color, rect_dims):
+        rect_base_x, rect_base_y, rect_width, rect_height = rect_dims
+        self.draw.polygon(
+            [
+                (rect_base_x, rect_height),
+                (rect_base_x, rect_width),
+                (rect_base_y, rect_width),
+                (rect_base_y, rect_height)
+            ],fill=color)
+
+    def draw_shape(self, start_coord, end_coord, color):
+        # Draws an Eclipse
+        self.draw.ellipse([start_coord, end_coord],fill=color)
+
+
+    def post_render(self, return_rgb_array=True):
+        rgb_array = np.asarray(self.image)
+        self.setup()
+        if not return_rgb_array:
+            self.image.show()
+        if return_rgb_array:
+            return rgb_array
+
 if __name__ == "__main__":
 
-    # grid_size = (50, 50)
-    # renderer = Renderer(grid_size=grid_size)
-    # renderer.setup()
-    # x = 0
-    # y = 0
+    grid_size = (5, 5)
+    renderer = PILRenderer(grid_size=grid_size)
+    renderer.setup()
+    x = 0
+    y = 0
 
-    # while True:
-    #     renderer.pre_render()
-    #     renderer.draw_cell(x, y)
+    for i in range(2):
+        renderer.pre_render()
+        renderer.draw_cell(x, y)
 
-    #     renderer.post_render()
+        renderer.post_render(return_rgb_array=False)
 
-    #     x += 1
-    #     y += 1
-    #     x %= grid_size[0]
-    #     y %= grid_size[1]
+        x += 1
+        y += 1
+        x %= grid_size[0]
+        y %= grid_size[1]
 
-    from rog_rl.model import DiseaseSimModel
-    model = DiseaseSimModel(
-                    population_density=1.0,
-                    initial_infection_fraction=0.01
-                    )
+    # from rog_rl.model import DiseaseSimModel
+    # model = DiseaseSimModel(10,10,
+    #                 population_density=1.0,
+    #                 initial_infection_fraction=0.01
+    #                 )
 
-    grid_size = (20, 20)
-    renderer = ANSIRenderer(
-                    model_grid=model.grid,
-                    grid_size=grid_size)
+    # renderer = ANSIRenderer()
 
-    for k in range(100):
-        renderer.clear_screen()
-        model.tick()
-        print(renderer.render())
-        input("Press Enter : ")
+    # for k in range(100):
+    #     renderer.clear_screen()
+    #     model.tick()
+    #     print(renderer.render(model.grid))
+    #     input("Press Enter : ")

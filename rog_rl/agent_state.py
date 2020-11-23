@@ -9,3 +9,7 @@ class AgentState(Enum):
     SYMPTOMATIC = 3  # S
     RECOVERED = 4  # R
     VACCINATED = 5  # V
+
+
+
+
