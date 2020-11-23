@@ -7,7 +7,8 @@ import numpy as np
 
 
 from rog_rl.agent_state import AgentState
-from rog_rl.model import DiseaseSimModel
+# from rog_rl.model import DiseaseSimModel
+# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 class ActionType(Enum):
@@ -47,7 +48,9 @@ class RogSimSingleAgentEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
+                    only_count_successful_vaccines=False,
                     vaccine_score_weight=-1,
+		    use_np_model=False,
                     max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -66,6 +69,13 @@ class RogSimSingleAgentEnv(gym.Env):
 
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
+        
+        if self.config['use_np_model']:
+            from rog_rl.model_np import DiseaseSimModel
+        else:
+            from rog_rl.model import DiseaseSimModel
+        self.disease_model = DiseaseSimModel
+            
 
         """
         The action space is composed of 5 discrete actions :
@@ -146,6 +156,8 @@ class RogSimSingleAgentEnv(gym.Env):
         prob_agent_movement = self.config['prob_agent_movement']
         disease_planner_config = self.config['disease_planner_config']
         max_simulation_timesteps = self.config['max_simulation_timesteps']
+        only_count_successful_vaccines = \
+            self.config['only_count_successful_vaccines']
         early_stopping_patience = \
             self.config['early_stopping_patience']
         toric = self.config['toric']
@@ -163,13 +175,14 @@ class RogSimSingleAgentEnv(gym.Env):
         """
         _simulator_instance_seed = self.np_random.randint(4294967296)
         # Instantiate Disease Model
-        self._model = DiseaseSimModel(
+        self._model = self.disease_model(
             width, height,
             population_density, vaccine_density,
             initial_infection_fraction, initial_vaccination_fraction,
             prob_infection, prob_agent_movement,
             disease_planner_config,
             max_simulation_timesteps, early_stopping_patience,
+            only_count_successful_vaccines,
             toric, seed=_simulator_instance_seed
         )
 
@@ -185,8 +198,9 @@ class RogSimSingleAgentEnv(gym.Env):
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
 
-        # Tick model
-        self._model.tick()
+#         Tick model
+        if not self.config["use_np_model"]:
+            self._model.tick() # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -276,6 +290,7 @@ class RogSimSingleAgentEnv(gym.Env):
         _simulation_steps = int(scheduler.steps)
 
         # Game Steps includes steps in which each agent is vaccinated
+        _game_steps = _simulation_steps + _vaccines_given
 
         self.renderer.update_stats(
                     "SCORE",
