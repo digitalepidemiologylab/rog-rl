@@ -378,6 +378,10 @@ class RogSimSingleAgentEnv(gym.Env):
 
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
+        # Add "Protected" and "Affected"
+        _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
+                                     _d["population.VACCINATED"]
+        _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
         # Add R0 to the game metrics
         # _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
