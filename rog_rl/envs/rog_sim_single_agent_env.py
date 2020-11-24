@@ -247,7 +247,7 @@ class RogSimSingleAgentEnv(gym.Env):
             """
             Initialize PIL Headless Renderer here for visualising during training
             """
-            self.metadata = {'render.modes': ['PIL'],
+            self.metadata = {'render.modes': ['PIL','rgb_array'],
                              'video.frames_per_second': 5}
             from rog_rl.renderer import PILRenderer
             self.renderer = PILRenderer(grid_size=(self.width, self.height))
@@ -556,7 +556,8 @@ if __name__ == "__main__":
     observation = env.reset()
     done = False
     k = 0
-    env.render(mode=render)
+    if not record:
+        env.render(mode=render)
     while not done:
         print("""
         Valid Actions :
@@ -574,7 +575,9 @@ if __name__ == "__main__":
         print("Action : ", _action)
         observation, reward, done, info = env.step(_action)
         print(observation.shape)
-        env.render(mode=render)
+
+        if not record:
+            env.render(mode=render)
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
         print("="*100)
