@@ -3,14 +3,10 @@
 import numpy as np
 import colorama
 
-import pyglet
-
-from pyglet.gl import glClearColor
-
 from rog_rl.colors import Colors, ColorMap
 from rog_rl.agent_state import AgentState
 
-from gym.envs.classic_control import rendering
+
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -18,6 +14,7 @@ class Renderer:
     def __init__(self, grid_size=(30, 30)):
         self.grid_size = grid_size
 
+        self.imports()
         self.COLORS = Colors()
         self.COLOR_MAP = ColorMap()
         self.setup_constants()
@@ -25,6 +22,15 @@ class Renderer:
         self.setup_stats()
 
         self.screen = None
+
+    def imports(self):
+        import pyglet
+        from pyglet.gl import glClearColor
+        from gym.envs.classic_control import rendering
+        self.pyglet = pyglet
+        self.glClearColor = glClearColor
+        self.rendering = rendering
+
 
     def setup_constants(self):
 
@@ -96,16 +102,16 @@ class Renderer:
     def setup(self, mode='human'):
         assert mode == "human"
         if self.screen is None:
-            self.screen = rendering.Viewer(self.WIDTH,
+            self.screen = self.rendering.Viewer(self.WIDTH,
                                            self.HEIGHT)
-            glClearColor(*self.convert_gym_color(self.COLORS.WHITE), 1)
+            self.glClearColor(*self.convert_gym_color(self.COLORS.WHITE), 1)
 
     # TODO: Not working via function
-    def add_text(self, text_string,font_size, x, y , color):
-        return pyglet.text.Label(text_string,
-                                    font_size,
-                                    x, y,
-                                    (*color, 255))
+    def add_text(self, text_string, font_size, x, y, color):
+        return self.pyglet.text.Label(text_string,
+                                 font_size,
+                                 x, y,
+                                 (*color, 255))
 
     def draw_stats(self):
         top_x = self.MARGIN
@@ -121,7 +127,7 @@ class Renderer:
 
         _state_text_color = self.COLOR_MAP.get_color("AGENT_STATE_TEXT_COLOR")
 
-        dict_texts[_text_string] = pyglet.text.Label(
+        dict_texts[_text_string] = self.pyglet.text.Label(
                                     _text_string,
                                     font_size=int(
                                                 self.AGENT_STATUS_FONT_SIZE
@@ -159,7 +165,7 @@ class Renderer:
 
             _font_size = int(self.AGENT_STATUS_FONT_SIZE)
             dict_texts[_text_string] = \
-                pyglet.text.Label(_text_string, font_size=_font_size,
+                self.pyglet.text.Label(_text_string, font_size=_font_size,
                                   x=top_x, y=top_y,
                                   color=(
                                       *self.COLOR_MAP.get_color(_state), 255))
@@ -187,7 +193,7 @@ class Renderer:
         _text_string = "Progress"
         _font_size = int(self.AGENT_STATUS_FONT_SIZE + 2)
         _color = (*_state_text_color, 255)
-        dict_texts[_text_string] = pyglet.text.Label(_text_string,
+        dict_texts[_text_string] = self.pyglet.text.Label(_text_string,
                                                      font_size=_font_size,
                                                      x=top_x, y=top_y,
                                                      color=_color)
@@ -217,7 +223,7 @@ class Renderer:
 
             _font_size = int(self.AGENT_STATUS_FONT_SIZE)
 
-            dict_texts[_text_string] = pyglet.text.Label(_text_string,
+            dict_texts[_text_string] = self.pyglet.text.Label(_text_string,
                                                          font_size=_font_size,
                                                          x=top_x, y=top_y,
                                                          color=_color)
@@ -230,7 +236,7 @@ class Renderer:
         _font_size = int(self.AGENT_STATUS_FONT_SIZE+2)
         _x = self.MARGIN
         _y = self.HEIGHT - self.MARGIN - self.AGENT_STATUS_FONT_SIZE
-        dict_texts[_text_string] = pyglet.text.Label(
+        dict_texts[_text_string] = self.pyglet.text.Label(
                                     _text_string, font_size=_font_size,
                                     x=_x,
                                     y=_y,
@@ -274,19 +280,19 @@ class Renderer:
                 color,
                 start_coord, end_coord)
 
-        if self.stats.get("VACC_AGENT_X") is not None and self.stats.get("VACC_AGENT_Y") is not None:
+        if self.stats.get("VACC_AGENT_X") is not None and \
+           self.stats.get("VACC_AGENT_Y") is not None:
             # TODO: Some x-y referencing issue here, hence
             # we are using vacc_agent_x == _y comparison
             # Needs some investigation.
             self.draw_vaccine_agent(self.stats.get("VACC_AGENT_X"),
-                                    self.stats.get("VACC_AGENT_Y"),color)
-
+                                    self.stats.get("VACC_AGENT_Y"), color)
 
     def draw_vaccine_agent(self, cell_x, cell_y, color=False):
         if not color:
             color = self.COLORS.BLUE
         cell_base = self.get_cell_base(int(self.stats["VACC_AGENT_X"]),
-                        int(self.stats["VACC_AGENT_Y"]))
+                    int(self.stats["VACC_AGENT_Y"]))
         start_coord = (
             cell_base[0],
             cell_base[1]
@@ -301,7 +307,7 @@ class Renderer:
         # Draws Triangle
         diameter = min(self.CELL_WIDTH,self.CELL_HEIGHT)
 
-        polygon = rendering.FilledPolygon([
+        polygon = self.rendering.FilledPolygon([
                 start_coord,
                 (start_coord[0] + self.CELL_WIDTH, start_coord[1]),
                 (start_coord[0] + self.CELL_WIDTH//2 , start_coord[1] + self.CELL_HEIGHT)
@@ -327,13 +333,13 @@ class Renderer:
         ))
 
     def draw_standard_line(self, color, start_coord, end_coord):
-        line = rendering.Line(start_coord, end_coord)
+        line = self.rendering.Line(start_coord, end_coord)
         line.set_color(*self.convert_gym_color(color))
         self.screen.add_geom(line)
 
     def draw_standard_rect(self, color, rect_dims):
         rect_base_x, rect_base_y, rect_width, rect_height = rect_dims
-        rectangle = rendering.FilledPolygon(
+        rectangle = self.rendering.FilledPolygon(
             [
                 (rect_base_x, rect_height),
                 (rect_base_x, rect_width),
@@ -385,7 +391,7 @@ class Renderer:
 
         arr = None
         if return_rgb_array:
-            buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+            buffer = self.pyglet.image.get_buffer_manager().get_color_buffer()
             image_data = buffer.get_image_data()
             arr = np.frombuffer(image_data.get_data(), dtype=np.uint8)
             # In https://github.com/openai/gym-http-api/issues/2, we
@@ -523,6 +529,9 @@ class ANSIRenderer:
 
 
 class PILRenderer(Renderer):
+
+    def imports(self):
+        pass
 
     def setup_constants(self):
 

@@ -189,7 +189,7 @@ class RogSimEnv(gym.Env):
             """
             Initialize PIL Headless Renderer here for visualising during training
             """
-            self.metadata = {'render.modes': ['PIL'],
+            self.metadata = {'render.modes': ['PIL', 'rgb_array'],
                              'video.frames_per_second': 5}
             from rog_rl.renderer import PILRenderer
             self.renderer = PILRenderer(grid_size=(self.width, self.height))
@@ -408,7 +408,7 @@ class RogSimEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "PIL" # "ansi"  # change to "human"
+    render = "human" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
                     height=5,
