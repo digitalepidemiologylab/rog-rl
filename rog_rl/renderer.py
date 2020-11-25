@@ -407,7 +407,8 @@ class Renderer:
         return arr if return_rgb_array else self.screen.isopen
 
     def close(self):
-        self.screen.close()
+        if self.screen is not None:
+            self.screen.close()
 
 
 class ANSIRenderer:

@@ -168,7 +168,14 @@ class RogSimEnv(gym.Env):
         return self._model.get_observation()
 
     def initialize_renderer(self, mode="human"):
-        if mode in ["human", "rgb_array"]:
+
+        if self.use_renderer in ["simple"]:
+            self.metadata = {'render.modes': ['simple', 'rgb_array'],
+                    'video.frames_per_second': 5}
+            self.renderer = True
+            return
+
+        elif mode in ["human", "rgb_array"]:
             self.metadata = {'render.modes': ['human', 'rgb_array'],
                              'video.frames_per_second': 5}
             from rog_rl.renderer import Renderer
@@ -193,6 +200,7 @@ class RogSimEnv(gym.Env):
                              'video.frames_per_second': 5}
             from rog_rl.renderer import PILRenderer
             self.renderer = PILRenderer(grid_size=(self.width, self.height))
+
         else:
             print("Invalid Mode selected for render:",mode)
 
@@ -392,14 +400,27 @@ class RogSimEnv(gym.Env):
         if not self.use_renderer:
             return
 
+        if self.use_renderer == "simple":
+            obs = self._model.get_observation()
+            rgb_obs = np.concatenate([np.expand_dims(obs[:,:,1:-1].any(axis=-1),-1),
+            np.expand_dims(obs[:,:,AgentState.SUSCEPTIBLE.value],-1),
+            np.expand_dims(obs[:,:,AgentState.VACCINATED.value],-1)],axis=-1)
+            # frame has to be of type uint8 (i.e. RGB values from 0-255)."
+            rgb_obs = rgb_obs.astype(np.uint8)*255
+            # img = Image.fromarray(rgb_obs, 'RGB')
+            return rgb_obs
+
         if not self.renderer:
             self.initialize_renderer(mode=mode)
+
+
 
         return self.update_renderer(mode=mode)
 
     def close(self):
         if self.renderer:
-            self.renderer.close()
+            if hasattr(self.renderer, 'close'):
+                self.renderer.close()
             self.renderer = False
         if self._model:
             # Delete the model instance if it exists
@@ -408,7 +429,7 @@ class RogSimEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "human" # "ansi"  # change to "human"
+    render = "PIL" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
                     height=5,
