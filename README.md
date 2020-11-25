@@ -116,5 +116,3 @@ env = RogEnv(config=_config)
 
 ## Author
 * Sharada Mohanty
-
-*TEST*
