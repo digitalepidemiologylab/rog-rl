@@ -99,11 +99,12 @@ class RogSimSingleAgentEnv(gym.Env):
         where we represent 4 channels of information across the grid
 
         Channel 1 : Is the cell Susceptible
-        Channel 2 : Is an agent in this cell exposed/infected at some point
-        Channel 3 : Is an agent in this cell Vaccinated
-        Channel 4 : Is the vaccination agent here
+        Channel 2 : Is an agent in this cell infecting neighbours
+        Channel 3 : Is an agent in this cell recovered
+        Channel 4 : Is an agent in this cell Vaccinated
+        Channel 5 : Is the vaccination agent here
         """
-        self.observation_channels = 4
+        self.observation_channels = 5
         self.observation_space = spaces.Box(
                                     low=np.float32(0),
                                     high=np.float32(1),
