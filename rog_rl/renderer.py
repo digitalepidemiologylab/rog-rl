@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import numpy as np
 import colorama
 
@@ -553,7 +554,7 @@ class PILRenderer(Renderer):
         del self.image
 
     def add_text(self, text_string, font_size, x, y, color):
-        font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", font_size)
+        font = ImageFont.truetype(os.path.join(os.path.dirname(os.path.realpath(__file__)), "renderfont.ttf"), font_size)
         self.draw.text((x,y), text_string, font=font, fill=color)
 
     def draw_stats(self):
