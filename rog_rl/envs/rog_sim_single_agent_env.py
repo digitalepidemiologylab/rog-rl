@@ -106,8 +106,8 @@ class RogSimSingleAgentEnv(gym.Env):
         """
         self.observation_channels = 5
         self.observation_space = spaces.Box(
-                                    low=np.float32(0),
-                                    high=np.float32(1),
+                                    low=np.uint8(0),
+                                    high=np.uint8(1),
                                     shape=(
                                         self.width,
                                         self.height,
@@ -176,7 +176,7 @@ class RogSimSingleAgentEnv(gym.Env):
             and during every new instantiation of a DiseaseEngine instance,
             it is seeded with a random number sampled from the self.np_random.
         """
-        _simulator_instance_seed = self.np_random.randint(4294967296)
+        _simulator_instance_seed = self.np_random.randint(429496729)
         # Instantiate Disease Model
         self._model = self.disease_model(
             width, height,
@@ -231,14 +231,14 @@ class RogSimSingleAgentEnv(gym.Env):
         INFECTED_CHANNEL = observation[... , AgentState.EXPOSED.value] + \
                            observation[... , AgentState.SYMPTOMATIC.value] + \
                            observation[... , AgentState.INFECTIOUS.value]
-
-        p_obs = np.array([
+        
+        p_obs = np.dstack([
             observation[... , AgentState.SUSCEPTIBLE.value],
             INFECTED_CHANNEL,
             observation[... , AgentState.RECOVERED.value],
             observation[... , AgentState.VACCINATED.value],
             vaccination_agent_channel]
-        ).T
+        )
 
         return np.uint8(p_obs)
 
@@ -586,7 +586,7 @@ if __name__ == "__main__":
     render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
-                    height=5,
+                    height=7,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
@@ -605,6 +605,7 @@ if __name__ == "__main__":
                     max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=render,  # can be "human", "ansi"
+                    use_np_model=True,
                     toric=False,
                     dummy_simulation=False,
                     debug=True)
