@@ -127,6 +127,8 @@ class RogSimSingleAgentEnv(gym.Env):
         self.vacc_agent_y = 0
 
         self._game_steps = 0
+        
+        
 
     def set_renderer(self, renderer):
         self.use_renderer = renderer
@@ -226,25 +228,34 @@ class RogSimSingleAgentEnv(gym.Env):
         vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
 
         INFECTED_CHANNEL = observation[... , AgentState.EXPOSED.value] + \
-            observation[... , AgentState.SYMPTOMATIC.value] + \
-            observation[... , AgentState.INFECTIOUS.value] + \
-            observation[... , AgentState.RECOVERED.value]
+                           observation[... , AgentState.SYMPTOMATIC.value] + \
+                           observation[... , AgentState.INFECTIOUS.value]
 
         p_obs = np.array([
             observation[... , AgentState.SUSCEPTIBLE.value],
             INFECTED_CHANNEL,
+            observation[... , AgentState.RECOVERED.value],
             observation[... , AgentState.VACCINATED.value],
             vaccination_agent_channel]
         ).T
 
-        return p_obs
+        return np.uint8(p_obs)
 
     def initialize_renderer(self, mode="human"):
 
         if self.use_renderer in ["simple"]:
             self.metadata = {'render.modes': ['simple', 'rgb_array'],
                     'video.frames_per_second': 5}
+            
             self.renderer = True
+            
+            self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
+            minimagesize = 60
+            self.render_scale = np.int32(max([1,
+                                     np.ceil(minimagesize//(3*self.width)),
+                                     np.ceil(minimagesize//(3*self.height))]))
+            self.scaler = np.ones((self.render_scale, self.render_scale, 1), 
+                                  np.uint8)
             return
 
         elif mode in ["human", "rgb_array"]:
@@ -533,13 +544,25 @@ class RogSimSingleAgentEnv(gym.Env):
             return
 
         if self.use_renderer == "simple":
+            k = 3
+            
             obs = self._model.get_observation()
-            rgb_obs = np.concatenate([np.expand_dims(obs[:,:,1:-1].any(axis=-1),-1),
-            np.expand_dims(obs[:,:,AgentState.SUSCEPTIBLE.value],-1),
-            np.expand_dims(obs[:,:,AgentState.VACCINATED.value],-1)],axis=-1)
-            # frame has to be of type uint8 (i.e. RGB values from 0-255)."
-            rgb_obs = rgb_obs.astype(np.uint8)*255
-            # img = Image.fromarray(rgb_obs, 'RGB')
+            obs = self._post_process_observation(obs)
+            arr = np.zeros((self.width * k, self.height * k, 3), np.uint8) + 255
+            state2col = np.zeros((self.width, self.height, 3), np.uint8)
+            
+             # x corresponds to width in the code, but the MOVE_N naming convention is wrong
+            va_r = self.vacc_agent_x * k
+            va_c = self.vacc_agent_y * k
+            arr[va_r : va_r + k, va_c : va_c + k] = 0
+            
+            for i,c in enumerate(self.colors):
+                state2col[obs[...,i].astype(bool), :] = c
+                
+            arr[k//2::k, k//2::k] = state2col # Puts value in spaced grid
+            
+            rgb_obs = np.kron(arr, self.scaler)
+            
             return rgb_obs
 
         if not self.renderer:
@@ -559,7 +582,7 @@ class RogSimSingleAgentEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "PIL" # "ansi"  # change to "human"
+    render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
                     height=5,
