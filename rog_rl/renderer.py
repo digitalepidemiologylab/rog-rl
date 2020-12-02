@@ -487,42 +487,41 @@ class ANSIRenderer:
                 self.COLOR_MAP.get_color("FORE_RESET"),
             )
 
-    def render_grid(self, grid):
+    def render_grid(self, width, height, grid):
         """
         Renders the Grid in ANSI
         """
 
         render_string = ""
-        render_string += "╔"+"═══"*(grid.width+1) + "╗\n"
+        render_string += "╔"+"═══"*(width+1) + "╗\n"
         render_string += "║  |{}|║\n".format(
-            "|".join([str(x).zfill(2) for x in range(grid.width)])
+            "|".join([str(x).zfill(2) for x in range(width)])
         )
-        for _y in range(grid.height):
+        for _y in range(height):
             render_string += "║{}|".format(str(_y).zfill(2))
-            for _x in range(grid.width):
-                _agent = grid[_y][_x]
-                _state = None if _agent is None else _agent.state
+            for _x in range(width):
+                _agent = grid[_x][_y]
+                _state = None if _agent is None else AgentState(_agent)
                 _char = "▄▄"
                 if self.stats["VACC_AGENT_X"] is not None and self.stats["VACC_AGENT_Y"] is not None:
                     # TODO: Some x-y referencing issue here, hence
-                    # we are using vacc_agent_x == _y comparison
-                    # Needs some investigation.
-                    if str(_y) == self.stats["VACC_AGENT_X"] and str(_x) == self.stats["VACC_AGENT_Y"]:
+                    # Check if this is fixed
+                    if str(_x) == self.stats["VACC_AGENT_X"] and str(_y) == self.stats["VACC_AGENT_Y"]:
                         _char = "▄()"
                     else:
                         _char = "▄▄"
 
                 render_string += self._get_cell_string(_state, _char=_char)
             render_string += "║\n"
-        render_string += "╚"+"═══"*(grid.width+1) + "╝"
+        render_string += "╚"+"═══"*(width+1) + "╝"
         return render_string
 
     def clear_screen(self):
         print(colorama.ansi.clear_screen())
 
-    def render(self, grid):
+    def render(self, width, height, grid):
         return "{}\n{}".format(
-            self.render_grid(grid),
+            self.render_grid(width, height, grid),
             self.render_stats()
         )
 

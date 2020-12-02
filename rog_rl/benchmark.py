@@ -16,7 +16,7 @@ render_profile_file = 'profile_stats_render'
 def performance_metrics(render_on=False):
 
     st = time.time()
-    env_config = dict(use_renderer=True)
+    env_config = dict(use_renderer="simple", model_np=True)
 
     '''
     To compare against standard envs like cartpole

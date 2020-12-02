@@ -289,6 +289,36 @@ class RogSimSingleAgentEnv(gym.Env):
 
         self.renderer.setup(mode=mode)
 
+
+    def get_agents_by_state(self, state):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            states = np.argmax(obs,axis=-1)
+            idx = np.where(states==state.value)
+            return [i for i in zip(idx[0], idx[1])]
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+
+
+    def get_agents_grid(self):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            return np.argmax(obs,axis=-1)
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+    
+    
+    def get_agent_positions(self, agent):
+        if self.config['use_np_model']:
+            agent_x, agent_y = agent
+            return agent_x, agent_y
+        else:
+            agent_x, agent_y = agent.pos
+            return agent_x, agent_y
+
+
     def update_renderer(self, mode='human'):
         """
         Updates the latest board state on the renderer
@@ -296,8 +326,15 @@ class RogSimSingleAgentEnv(gym.Env):
         # Draw Renderer
         # Update Renderer State
         model = self._model
-        scheduler = model.get_scheduler()
-        total_agents = scheduler.get_agent_count()
+
+        if self.config['use_np_model']:
+            total_agents = model.n_agents
+            _simulation_steps = model.schedule_steps
+        else:
+            scheduler = model.get_scheduler()
+            total_agents = scheduler.get_agent_count()
+            _simulation_steps = int(scheduler.steps)
+
         state_metrics = self.get_current_game_metrics()
 
         initial_vaccines = int(
@@ -306,7 +343,7 @@ class RogSimSingleAgentEnv(gym.Env):
         _vaccines_given = \
             model.max_vaccines - model.n_vaccines - initial_vaccines
 
-        _simulation_steps = int(scheduler.steps)
+
 
         # Game Steps includes steps in which each agent is vaccinated
         _game_steps = _simulation_steps + _vaccines_given
@@ -343,9 +380,9 @@ class RogSimSingleAgentEnv(gym.Env):
             )
             if mode in ["human", "rgb_array"]:
                 color = self.renderer.COLOR_MAP.get_color(_state)
-                agents = scheduler.get_agents_by_state(_state)
+                agents = self.get_agents_by_state(_state)
                 for _agent in agents:
-                    _agent_x, _agent_y = _agent.pos
+                    _agent_x, _agent_y = self.get_agent_positions(_agent)
                     self.renderer.draw_cell(
                                 _agent_x, _agent_y,
                                 color
@@ -363,7 +400,8 @@ class RogSimSingleAgentEnv(gym.Env):
             render_output = self.renderer.post_render(return_rgb_array)
             return render_output
         elif mode == "ansi":
-            render_output = self.renderer.render(self._model.grid)
+            grid = self.get_agents_grid()
+            render_output = self.renderer.render(self.width,self.height,grid)
             if self.debug:
                 print(render_output)
             return render_output
