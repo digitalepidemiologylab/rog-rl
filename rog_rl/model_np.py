@@ -1,6 +1,8 @@
 import numpy as np
 
 from rog_rl.agent_state import AgentState
+from rog_rl.vaccination_response import VaccinationResponse
+from scipy.stats import truncnorm
 from scipy.signal import convolve2d
 from collections import deque
 
@@ -40,6 +42,7 @@ class DiseaseSimModel:
         },
         max_timesteps=200,
         early_stopping_patience=14,
+        only_count_successful_vaccines=True,
         toric=True,
         seed=None
     ):
@@ -64,7 +67,9 @@ class DiseaseSimModel:
         self.max_timesteps = max_timesteps
         self.early_stopping_patience = early_stopping_patience
         self.toric = toric
+        self.boundary = 'wrap' if toric else 'fill'
         self.seed = seed
+        self.only_count_successful_vaccines = only_count_successful_vaccines
         
         self.last_n_susceptible_fractions = deque(maxlen=early_stopping_patience)
         
@@ -104,7 +109,7 @@ class DiseaseSimModel:
         self.exposure_tvals = np.zeros(self.gridshape)
         self.latent_tvals = self._sample_tvals(latent_period_mu,
                                               latent_period_sigma,
-                                              0)
+                                              self.exposure_tvals)
         self.incubation_tvals = self._sample_tvals(incubation_period_mu,
                                               incubation_period_sigma,
                                               self.latent_tvals)
@@ -117,23 +122,38 @@ class DiseaseSimModel:
                                 AgentState.SYMPTOMATIC: [AgentState.RECOVERED, self.recovery_tvals],}
         # Infect
         n_infect = int(self.initial_infection_fraction * self.n_agents)
-        infect_locs = self.rng.choice(np.arange(self.width * self.height), 
+        infect_list = self.rng.choice(np.arange(self.width * self.height), 
                                        size=n_infect, replace=False)       
-        infect_locs = (infect_locs // self.width, infect_locs % self.height)
+        infect_locs = (infect_list // self.width, infect_list % self.height)
         self.infection_scheduled_grid[infect_locs] = True
         self.infection_base_time_grid[infect_locs] = self.schedule_steps
-        self.observation[self.infection_scheduled_grid, AgentState.SUSCEPTIBLE.value] = 0
+        self.observation[self.infection_scheduled_grid] = 0
         self.observation[self.infection_scheduled_grid, AgentState.EXPOSED.value] = 1
                              
         # Initial vaccinate  - Skipped for now - Ignore locations infected and vaccinate in similar manner
-        n_vaccine_init = 0
+        n_vaccine_init = int(self.initial_vaccination_fraction * self.n_agents)
+        not_infected = list(set(np.arange(self.width * self.height)) - set(infect_list))
+        vaccinate_list = self.rng.choice(not_infected, size=n_vaccine_init, replace=False)
+        vaccinate_locs = (vaccinate_list // self.width, vaccinate_list % self.height)
+        vaccinate_mask = np.zeros(self.gridshape, dtype=np.bool)
+        vaccinate_mask[vaccinate_locs] = True
+        self.observation[vaccinate_mask] = 0
+        self.observation[vaccinate_mask, AgentState.VACCINATED.value] = 1
         self.max_vaccines = self.n_vaccines + n_vaccine_init
                             
     def _sample_tvals(self, mu, sigma, minvals):
-        tvals = np.int32(self.rng.normal(mu, sigma, size=self.gridshape))
-        # This won't generate same distribution as the while loop resampling
-        # Need to sample from truncated normal distribution - Check scipy.stats.truncnorm
-        tvals = minvals + np.abs(minvals - tvals - 1) 
+        minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
+        if sigma > 0:
+            a = (minv - mu) / sigma 
+        else:
+            a = (minv - mu) * np.inf
+#         maxv = np.inf
+#         b = (maxv - mu) / sigma
+        b = np.zeros_like(a) + np.inf
+        # truncnorm.rvs can draw from a 1D array of distributions - 
+        # But the size parameter doesn't work in multi distribution
+        t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
+        tvals = np.int32(t.reshape(self.gridshape))
         return tvals
    
     ###########################################################################
@@ -184,13 +204,16 @@ class DiseaseSimModel:
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
-        self.n_vaccines -= 1
+        if not self.only_count_successful_vaccines:
+            self.n_vaccines -= 1
 
         agent_state = np.argmax(self.observation[cell_x, cell_y])
         if agent_state == AgentState.SUSCEPTIBLE.value:
             # Case 2 : Agent is susceptible, and can be vaccinated
             self.observation[cell_x, cell_y] = 0
             self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
+            if self.only_count_successful_vaccines:
+                self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
         elif agent_state == AgentState.EXPOSED.value:
             # Case 3 : Agent is already exposed, and its a waste of vaccination
@@ -264,9 +287,11 @@ class DiseaseSimModel:
         infectious = self.observation[..., AgentState.INFECTIOUS.value] + \
                      self.observation[..., AgentState.SYMPTOMATIC.value]
         infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1, 
-                                         mode='same')
-        p = np.zeros(self.gridshape) + self.prob_infection
-        infection_prob_allneighbours = p * (1-p**infected_neighbours)/ (1-p) # GP Series if all prob_infection are same
+                                         mode='same', boundary=self.boundary)
+#         p = np.zeros(self.gridshape) + self.prob_infection
+        p = self.prob_infection
+        # GP Series if all prob_infection are same --> p + p*(1-p) + p*(1-p)^2 + ... p*(1-p)^(n-1)
+        infection_prob_allneighbours = 1-(1-p)**infected_neighbours
         infected = self.rng.rand(*self.gridshape,) < infection_prob_allneighbours
         already_infected = self.infection_scheduled_grid
         infected = np.logical_and(infected, ~already_infected)

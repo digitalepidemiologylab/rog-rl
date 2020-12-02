@@ -6,7 +6,8 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-from rog_rl.model import DiseaseSimModel
+# from rog_rl.model import DiseaseSimModel
+# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 from rog_rl.envs.rog_sim_single_agent_env import RogSimSingleAgentEnv
@@ -37,7 +38,9 @@ class RogSimEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
+                    only_count_successful_vaccines=False,
                     vaccine_score_weight=-1,
+                    use_np_model=False,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -56,6 +59,13 @@ class RogSimEnv(gym.Env):
 
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
+        
+        if self.config['use_np_model']:
+            from rog_rl.model_np import DiseaseSimModel
+        else:
+            from rog_rl.model import DiseaseSimModel
+        self.disease_model = DiseaseSimModel
+            
 
         self.action_space = spaces.MultiDiscrete(
             [
@@ -108,6 +118,8 @@ class RogSimEnv(gym.Env):
         prob_agent_movement = self.config['prob_agent_movement']
         disease_planner_config = self.config['disease_planner_config']
         max_simulation_timesteps = self.config['max_simulation_timesteps']
+        only_count_successful_vaccines = \
+            self.config['only_count_successful_vaccines']
         early_stopping_patience = \
             self.config['early_stopping_patience']
         toric = self.config['toric']
@@ -125,13 +137,14 @@ class RogSimEnv(gym.Env):
         """
         _simulator_instance_seed = self.np_random.randint(4294967296)
         # Instantiate Disease Model
-        self._model = DiseaseSimModel(
+        self._model = self.disease_model(
             width, height,
             population_density, vaccine_density,
             initial_infection_fraction, initial_vaccination_fraction,
             prob_infection, prob_agent_movement,
             disease_planner_config,
             max_simulation_timesteps, early_stopping_patience,
+            only_count_successful_vaccines,
             toric, seed=_simulator_instance_seed
         )
 
@@ -143,7 +156,8 @@ class RogSimEnv(gym.Env):
             self._model.n_vaccines
 
 #         Tick model
-#         self._model.tick() # Not needed for model_np
+        if not self.config["use_np_model"]:
+            self._model.tick() # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -192,6 +206,36 @@ class RogSimEnv(gym.Env):
 
         self.renderer.setup(mode=mode)
 
+    
+    def get_agents_by_state(self, state):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            states = np.argmax(obs,axis=-1)
+            idx = np.where(states==state.value)
+            return [i for i in zip(idx[0], idx[1])]
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+
+
+    def get_agents_grid(self):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            return np.argmax(obs,axis=-1)
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+    
+    
+    def get_agent_positions(self, agent):
+        if self.config['use_np_model']:
+            agent_x, agent_y = agent
+            return agent_x, agent_y
+        else:
+            agent_x, agent_y = agent.pos
+            return agent_x, agent_y
+
+    
     def update_renderer(self, mode='human'):
         """
         Updates the latest board state on the renderer
@@ -199,8 +243,14 @@ class RogSimEnv(gym.Env):
         # Draw Renderer
         # Update Renderer State
         model = self._model
-        scheduler = model.get_scheduler()
-        total_agents = scheduler.get_agent_count()
+        if self.config['use_np_model']:
+            total_agents = model.n_agents
+            _simulation_steps = model.schedule_steps
+        else:
+            scheduler = model.get_scheduler()
+            total_agents = scheduler.get_agent_count()
+            _simulation_steps = int(scheduler.steps)
+
         state_metrics = self.get_current_game_metrics()
 
         initial_vaccines = int(
@@ -208,8 +258,6 @@ class RogSimEnv(gym.Env):
 
         _vaccines_given = \
             model.max_vaccines - model.n_vaccines - initial_vaccines
-
-        _simulation_steps = int(scheduler.steps)
 
         # Game Steps includes steps in which each agent is vaccinated
         _game_steps = _simulation_steps + _vaccines_given
@@ -235,9 +283,9 @@ class RogSimEnv(gym.Env):
             )
             if mode in ["human", "rgb_array"]:
                 color = self.renderer.COLOR_MAP.get_color(_state)
-                agents = scheduler.get_agents_by_state(_state)
+                agents = self.get_agents_by_state(_state)
                 for _agent in agents:
-                    _agent_x, _agent_y = _agent.pos
+                    _agent_x, _agent_y = self.get_agent_positions(_agent)
                     self.renderer.draw_cell(
                                 _agent_x, _agent_y,
                                 color
@@ -255,7 +303,8 @@ class RogSimEnv(gym.Env):
             render_output = self.renderer.post_render(return_rgb_array)
             return render_output
         elif mode == "ansi":
-            render_output = self.renderer.render(self._model.grid)
+            grid = self.get_agents_grid()
+            render_output = self.renderer.render(self.width,self.height,grid)
             if self.debug:
                 print(render_output)
             return render_output
@@ -289,6 +338,10 @@ class RogSimEnv(gym.Env):
 
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
+        # Add "Protected" and "Affected"
+        _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
+                                     _d["population.VACCINATED"]
+        _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
         # Add R0 to the game metrics
 #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d

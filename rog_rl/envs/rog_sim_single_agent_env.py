@@ -7,7 +7,8 @@ import numpy as np
 
 
 from rog_rl.agent_state import AgentState
-from rog_rl.model import DiseaseSimModel
+# from rog_rl.model import DiseaseSimModel
+# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 class ActionType(Enum):
@@ -47,7 +48,9 @@ class RogSimSingleAgentEnv(gym.Env):
                         "recovery_period_mu": 14 * 4,
                         "recovery_period_sigma": 0,
                     },
+                    only_count_successful_vaccines=False,
                     vaccine_score_weight=-1,
+		    use_np_model=False,
                     max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "human", "ansi"
@@ -66,6 +69,13 @@ class RogSimSingleAgentEnv(gym.Env):
 
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
+        
+        if self.config['use_np_model']:
+            from rog_rl.model_np import DiseaseSimModel
+        else:
+            from rog_rl.model import DiseaseSimModel
+        self.disease_model = DiseaseSimModel
+            
 
         """
         The action space is composed of 5 discrete actions :
@@ -89,14 +99,15 @@ class RogSimSingleAgentEnv(gym.Env):
         where we represent 4 channels of information across the grid
 
         Channel 1 : Is the cell Susceptible
-        Channel 2 : Is an agent in this cell exposed/infected at some point
-        Channel 3 : Is an agent in this cell Vaccinated
-        Channel 4 : Is the vaccination agent here
+        Channel 2 : Is an agent in this cell infecting neighbours
+        Channel 3 : Is an agent in this cell recovered
+        Channel 4 : Is an agent in this cell Vaccinated
+        Channel 5 : Is the vaccination agent here
         """
-        self.observation_channels = 4
+        self.observation_channels = 5
         self.observation_space = spaces.Box(
-                                    low=np.float32(0),
-                                    high=np.float32(1),
+                                    low=np.uint8(0),
+                                    high=np.uint8(1),
                                     shape=(
                                         self.width,
                                         self.height,
@@ -117,6 +128,8 @@ class RogSimSingleAgentEnv(gym.Env):
         self.vacc_agent_y = 0
 
         self._game_steps = 0
+        
+        
 
     def set_renderer(self, renderer):
         self.use_renderer = renderer
@@ -146,6 +159,8 @@ class RogSimSingleAgentEnv(gym.Env):
         prob_agent_movement = self.config['prob_agent_movement']
         disease_planner_config = self.config['disease_planner_config']
         max_simulation_timesteps = self.config['max_simulation_timesteps']
+        only_count_successful_vaccines = \
+            self.config['only_count_successful_vaccines']
         early_stopping_patience = \
             self.config['early_stopping_patience']
         toric = self.config['toric']
@@ -161,15 +176,16 @@ class RogSimSingleAgentEnv(gym.Env):
             and during every new instantiation of a DiseaseEngine instance,
             it is seeded with a random number sampled from the self.np_random.
         """
-        _simulator_instance_seed = self.np_random.randint(4294967296)
+        _simulator_instance_seed = self.np_random.randint(429496729)
         # Instantiate Disease Model
-        self._model = DiseaseSimModel(
+        self._model = self.disease_model(
             width, height,
             population_density, vaccine_density,
             initial_infection_fraction, initial_vaccination_fraction,
             prob_infection, prob_agent_movement,
             disease_planner_config,
             max_simulation_timesteps, early_stopping_patience,
+            only_count_successful_vaccines,
             toric, seed=_simulator_instance_seed
         )
 
@@ -185,8 +201,9 @@ class RogSimSingleAgentEnv(gym.Env):
         self._max_episode_steps = self.config['max_simulation_timesteps'] + \
             self._model.n_vaccines
 
-        # Tick model
-        self._model.tick()
+#         Tick model
+        if not self.config["use_np_model"]:
+            self._model.tick() # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
@@ -212,25 +229,34 @@ class RogSimSingleAgentEnv(gym.Env):
         vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
 
         INFECTED_CHANNEL = observation[... , AgentState.EXPOSED.value] + \
-            observation[... , AgentState.SYMPTOMATIC.value] + \
-            observation[... , AgentState.INFECTIOUS.value] + \
-            observation[... , AgentState.RECOVERED.value]
-
-        p_obs = np.array([
+                           observation[... , AgentState.SYMPTOMATIC.value] + \
+                           observation[... , AgentState.INFECTIOUS.value]
+        
+        p_obs = np.dstack([
             observation[... , AgentState.SUSCEPTIBLE.value],
             INFECTED_CHANNEL,
+            observation[... , AgentState.RECOVERED.value],
             observation[... , AgentState.VACCINATED.value],
             vaccination_agent_channel]
-        ).T
+        )
 
-        return p_obs
+        return np.uint8(p_obs)
 
     def initialize_renderer(self, mode="human"):
 
         if self.use_renderer in ["simple"]:
             self.metadata = {'render.modes': ['simple', 'rgb_array'],
                     'video.frames_per_second': 5}
+            
             self.renderer = True
+            
+            self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
+            minimagesize = 60
+            self.render_scale = np.int32(max([1,
+                                     np.ceil(minimagesize//(3*self.width)),
+                                     np.ceil(minimagesize//(3*self.height))]))
+            self.scaler = np.ones((self.render_scale, self.render_scale, 1), 
+                                  np.uint8)
             return
 
         elif mode in ["human", "rgb_array"]:
@@ -263,6 +289,36 @@ class RogSimSingleAgentEnv(gym.Env):
 
         self.renderer.setup(mode=mode)
 
+
+    def get_agents_by_state(self, state):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            states = np.argmax(obs,axis=-1)
+            idx = np.where(states==state.value)
+            return [i for i in zip(idx[0], idx[1])]
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+
+
+    def get_agents_grid(self):
+        if self.config['use_np_model']:
+            obs = self._model.observation
+            return np.argmax(obs,axis=-1)
+        else:
+            scheduler = self._model.get_scheduler()
+            return scheduler.get_agents_by_state()
+    
+    
+    def get_agent_positions(self, agent):
+        if self.config['use_np_model']:
+            agent_x, agent_y = agent
+            return agent_x, agent_y
+        else:
+            agent_x, agent_y = agent.pos
+            return agent_x, agent_y
+
+
     def update_renderer(self, mode='human'):
         """
         Updates the latest board state on the renderer
@@ -270,8 +326,15 @@ class RogSimSingleAgentEnv(gym.Env):
         # Draw Renderer
         # Update Renderer State
         model = self._model
-        scheduler = model.get_scheduler()
-        total_agents = scheduler.get_agent_count()
+
+        if self.config['use_np_model']:
+            total_agents = model.n_agents
+            _simulation_steps = model.schedule_steps
+        else:
+            scheduler = model.get_scheduler()
+            total_agents = scheduler.get_agent_count()
+            _simulation_steps = int(scheduler.steps)
+
         state_metrics = self.get_current_game_metrics()
 
         initial_vaccines = int(
@@ -280,9 +343,10 @@ class RogSimSingleAgentEnv(gym.Env):
         _vaccines_given = \
             model.max_vaccines - model.n_vaccines - initial_vaccines
 
-        _simulation_steps = int(scheduler.steps)
+
 
         # Game Steps includes steps in which each agent is vaccinated
+        _game_steps = _simulation_steps + _vaccines_given
 
         self.renderer.update_stats(
                     "SCORE",
@@ -316,9 +380,9 @@ class RogSimSingleAgentEnv(gym.Env):
             )
             if mode in ["human", "rgb_array"]:
                 color = self.renderer.COLOR_MAP.get_color(_state)
-                agents = scheduler.get_agents_by_state(_state)
+                agents = self.get_agents_by_state(_state)
                 for _agent in agents:
-                    _agent_x, _agent_y = _agent.pos
+                    _agent_x, _agent_y = self.get_agent_positions(_agent)
                     self.renderer.draw_cell(
                                 _agent_x, _agent_y,
                                 color
@@ -336,7 +400,8 @@ class RogSimSingleAgentEnv(gym.Env):
             render_output = self.renderer.post_render(return_rgb_array)
             return render_output
         elif mode == "ansi":
-            render_output = self.renderer.render(self._model.grid)
+            grid = self.get_agents_grid()
+            render_output = self.renderer.render(self.width,self.height,grid)
             if self.debug:
                 print(render_output)
             return render_output
@@ -370,6 +435,10 @@ class RogSimSingleAgentEnv(gym.Env):
 
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
+        # Add "Protected" and "Affected"
+        _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
+                                     _d["population.VACCINATED"]
+        _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
         # Add R0 to the game metrics
         # _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
@@ -514,13 +583,25 @@ class RogSimSingleAgentEnv(gym.Env):
             return
 
         if self.use_renderer == "simple":
+            k = 3
+            
             obs = self._model.get_observation()
-            rgb_obs = np.concatenate([np.expand_dims(obs[:,:,1:-1].any(axis=-1),-1),
-            np.expand_dims(obs[:,:,AgentState.SUSCEPTIBLE.value],-1),
-            np.expand_dims(obs[:,:,AgentState.VACCINATED.value],-1)],axis=-1)
-            # frame has to be of type uint8 (i.e. RGB values from 0-255)."
-            rgb_obs = rgb_obs.astype(np.uint8)*255
-            # img = Image.fromarray(rgb_obs, 'RGB')
+            obs = self._post_process_observation(obs)
+            arr = np.zeros((self.width * k, self.height * k, 3), np.uint8) + 255
+            state2col = np.zeros((self.width, self.height, 3), np.uint8)
+            
+             # x corresponds to width in the code, but the MOVE_N naming convention is wrong
+            va_r = self.vacc_agent_x * k
+            va_c = self.vacc_agent_y * k
+            arr[va_r : va_r + k, va_c : va_c + k] = 0
+            
+            for i,c in enumerate(self.colors):
+                state2col[obs[...,i].astype(bool), :] = c
+                
+            arr[k//2::k, k//2::k] = state2col # Puts value in spaced grid
+            
+            rgb_obs = np.kron(arr, self.scaler)
+            
             return rgb_obs
 
         if not self.renderer:
@@ -540,10 +621,10 @@ class RogSimSingleAgentEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "PIL" # "ansi"  # change to "human"
+    render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
-                    height=5,
+                    height=7,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
@@ -562,6 +643,7 @@ if __name__ == "__main__":
                     max_simulation_timesteps=20 * 20 * 10,
                     early_stopping_patience=14,
                     use_renderer=render,  # can be "human", "ansi"
+                    use_np_model=True,
                     toric=False,
                     dummy_simulation=False,
                     debug=True)

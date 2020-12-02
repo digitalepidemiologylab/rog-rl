@@ -46,6 +46,7 @@ class DiseaseSimModel(Model):
         },
         max_timesteps=200,
         early_stopping_patience=14,
+        only_count_successful_vaccines=False,
         toric=True,
         seed=None
     ):
@@ -84,6 +85,7 @@ class DiseaseSimModel(Model):
         )
         self.initialize_datacollector()
         self.running = True
+        self.only_count_successful_vaccines = only_count_successful_vaccines
         self.datacollector.collect(self)
 
     ###########################################################################
@@ -250,7 +252,8 @@ class DiseaseSimModel(Model):
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
-        self.n_vaccines -= 1
+        if not self.only_count_successful_vaccines:
+            self.n_vaccines -= 1
 
         # Case 1 : Cell is empty
         if self.grid.is_cell_empty((cell_x, cell_y)):
@@ -260,6 +263,8 @@ class DiseaseSimModel(Model):
         if agent.state == AgentState.SUSCEPTIBLE:
             # Case 2 : Agent is susceptible, and can be vaccinated
             agent.set_state(AgentState.VACCINATED)
+            if self.only_count_successful_vaccines:
+                self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
         elif agent.state == AgentState.EXPOSED:
             # Case 3 : Agent is already exposed, and its a waste of vaccination
