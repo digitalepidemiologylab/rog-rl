@@ -1,10 +1,5 @@
 import pytest
-from click.testing import CliRunner
 import rog_rl.cli as cli
-
-@pytest.fixture(scope="module")
-def runner():
-    return CliRunner()
 
 
 @pytest.mark.skip(reason="Launches server")

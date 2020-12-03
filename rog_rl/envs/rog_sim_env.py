@@ -10,12 +10,13 @@ from rog_rl.agent_state import AgentState
 # from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
+
 class ActionType(Enum):
     STEP = 0
     VACCINATE = 1
 
 
-class RogSimBaseEnv(gym.Env):
+class RogSimEnv(gym.Env):
 
     def __init__(self, config={}):
         # Setup Config
@@ -41,15 +42,13 @@ class RogSimBaseEnv(gym.Env):
                     use_np_model=False,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
-                    use_renderer=False,  # can be "simple", "ansi"
+                    use_renderer=False,  # can be "human", "ansi"
                     toric=True,
                     dummy_simulation=False,
                     debug=False)
         self.config = {}
         self.config.update(self.default_config)
-        self.update_configs(config)
-
-        self.seed(self.config.get('seed'))
+        self.config.update(config)
 
         self.dummy_simulation = self.config["dummy_simulation"]
         self.debug = self.config["debug"]
@@ -60,12 +59,24 @@ class RogSimBaseEnv(gym.Env):
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
         
-
-        self.disease_model = self.set_disease_model()
+        if self.config['use_np_model']:
+            from rog_rl.model_np import DiseaseSimModel
+        else:
+            from rog_rl.model import DiseaseSimModel
+        self.disease_model = DiseaseSimModel
             
 
-        self.action_space = self.set_action_space()
-        self.observation_space = self.set_observation_space()
+        self.action_space = spaces.MultiDiscrete(
+            [
+                len(ActionType), self.width, self.height
+            ])
+        self.observation_space = spaces.Box(
+                                    low=np.float32(0),
+                                    high=np.float32(1),
+                                    shape=(
+                                        self.width,
+                                        self.height,
+                                        len(AgentState)))
 
         self._model = None
         self.running_score = None
@@ -78,35 +89,6 @@ class RogSimBaseEnv(gym.Env):
 
         self.cumulative_reward = 0
 
-    def update_configs(self, config = {}):
-        self.config.update(config)
-    
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
-    def set_observation_space(self):
-        return spaces.Box(
-                                    low=np.float32(0),
-                                    high=np.float32(1),
-                                    shape=(
-                                        self.width,
-                                        self.height,
-                                        len(AgentState)))
-
-    def set_action_space(self):
-        return spaces.MultiDiscrete(
-            [
-                len(ActionType), self.width, self.height
-            ])
-    
-    def set_disease_model(self):
-        if self.config['use_np_model']:
-            from rog_rl.model_np import DiseaseSimModel
-        else:
-            from rog_rl.model import DiseaseSimModel
-        return DiseaseSimModel
-    
     def set_renderer(self, renderer):
         self.use_renderer = renderer
         if self.use_renderer:
@@ -502,11 +484,10 @@ if __name__ == "__main__":
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=render,
-                    use_model_np=True,
                     toric=False,
                     dummy_simulation=False,
                     debug=True)
-    env = RogSimBaseEnv(config=env_config)
+    env = RogSimEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:

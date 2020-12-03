@@ -4,11 +4,11 @@ __author__ = """Sharada Mohanty"""
 __email__ = 'spmohanty91@gmail.com'
 __version__ = '0.1.0'
 
-from rog_rl.env import RogSimEnv  # noqa
-from rog_rl.env import RogSimSingleAgentEnv  # noqa
+from rog_rl.envs.rog_sim_env import RogSimEnv  # noqa
+from rog_rl.envs.rog_sim_single_agent_env import RogSimSingleAgentEnv  # noqa
 
 from gym.envs.registration import register
 
-register(id='RogRL-v0',
-         entry_point='rog_rl.env:RogSimEnv',
+register(id='RogRBase-v0',
+         entry_point='rog_rl.env:RogSimBaseEnv',
          )

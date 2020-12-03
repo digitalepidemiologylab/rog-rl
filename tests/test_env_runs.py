@@ -2,30 +2,23 @@ import pytest
 from rog_rl.env import AgentState
 from rog_rl.env import ActionType
 from rog_rl.envs.rog_sim_single_agent_env import ActionType as SingleAgentActionType
+import numpy as np
+seed = 10000  # 10000 fails
 
 
-def test_run_env(env):
-    observation = env.reset()
-    done = False
-    k = 0
+def test_run_all_envs(all_envs):
+    for env in all_envs:
+        np.random.seed(seed)
+        observation = env.reset()
+        done = False
 
-    while not done:
-        _action = env.action_space.sample()
-        print("Action : ", _action)
-        observation, reward, done, info = env.step(_action)
-
-def test_run_single_agent_env(single_agent_env):
-    observation = single_agent_env.reset()
-    done = False
-    k = 0
-
-    while not done:
-        _action = single_agent_env.action_space.sample()
-        print("Action : ", _action)
-        observation, reward, done, info = single_agent_env.step(_action)
+        while not done:
+            _action = env.action_space.sample()
+            observation, reward, done, info = env.step(_action)
 
 
 def test_actions_env(env):
+    np.random.seed(seed)
     observation = env.reset()
     _action = env.action_space.sample()
     n_action_types = len(ActionType)
@@ -36,6 +29,7 @@ def test_actions_env(env):
 
 
 def test_actions_single_agent_env(single_agent_env):
+    np.random.seed(seed)
     observation = single_agent_env.reset()
     _action = single_agent_env.action_space.sample()
     n_action_types = len(ActionType)
@@ -43,7 +37,6 @@ def test_actions_single_agent_env(single_agent_env):
         _action = i
         print("Action : ", _action)
         observation, reward, done, info = single_agent_env.step(_action)
-
 
 
 
