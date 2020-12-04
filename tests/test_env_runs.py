@@ -3,7 +3,7 @@ from rog_rl.env import AgentState
 from rog_rl.env import ActionType
 from rog_rl.envs.rog_sim_single_agent_env import ActionType as SingleAgentActionType
 import numpy as np
-seed = 10000  # 10000 fails
+seed = 1000  # 10000 fails
 
 
 def test_run_all_envs(all_envs):

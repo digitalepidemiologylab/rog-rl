@@ -6,9 +6,11 @@ from rog_rl.agent_state import AgentState
 from collections import defaultdict
 from itertools import permutations
 from scipy import stats
+import warnings
+warnings.filterwarnings("ignore")
 
 
-n_runs = 20
+n_runs = 100
 seed = 100
 def kl_divergence(p, q):
     p = np.array(p)
@@ -49,8 +51,39 @@ def collect_env_data(env):
     return infos_runs
 
 
-def test_run_env(env, single_agent_env):
+@pytest.mark.skip(reason="Both the envs are different and expected to fail")
+def test_env_distributions(env, single_agent_env):
     np.random.seed(seed)
+    run_statistical_test(env, single_agent_env)
+
+
+def test_env_mesa_model_distributions(env, all_mesa_envs):
+    env_mesa = all_mesa_envs[0]
+    np.random.seed(seed)
+    run_statistical_test(env, env_mesa)
+
+
+def test_single_agent_env_mesa_model_distributions(single_agent_env, all_mesa_envs):
+    single_agent_env_mesa = all_mesa_envs[1]
+    np.random.seed(seed)
+    run_statistical_test(single_agent_env, single_agent_env_mesa)
+
+
+def run_statistical_test(env, single_agent_env):
+
+    """
+    Compares 2 environments to check if the population distributions match.
+    This checks for all the agent states saved in the info object
+
+    Args:
+    -------
+    env: instantiated env which is for reference
+    env: the instantiated env for comparison
+
+    Note the order is important and this is not commutative
+
+    """
+
     kl_values = defaultdict(list)
     infos_runs = collect_env_data(env)
 
@@ -65,8 +98,6 @@ def test_run_env(env, single_agent_env):
             kl_val = kl_divergence(info_run1[key],info_run2[key])
             if not np.isposinf(kl_val) and not np.isneginf(kl_val):
                 kl_values[key].append(kl_val)
-
-    print(kl_values)
 
     infos_runs_single_agent = collect_env_data(single_agent_env)
 
@@ -92,7 +123,31 @@ def test_run_env(env, single_agent_env):
             percentiles_single_agent[key].append(percentile_val/100)
 
 
-    # TODO: Add Anderson Darling test for p-value
+    for _state in AgentState:
+        key = "population.{}".format(_state.name)
+        perc_vals = percentiles_single_agent[key]
+        if len(set(perc_vals)) > 1:
+            T=stats.uniform(0,1).rvs(len(perc_vals))
+            statistic_ad,critical_values_ad,significance_level=stats.anderson_ksamp([T,perc_vals])     
+            print(statistic_ad)
+            print(critical_values_ad)
+
+            # The critical values for significance levels 25%, 10%, 5%, 2.5%, 1%,
+            # 0.5%, 0.1%.
+
+            # Check at 5% confidence level           
+            if statistic_ad < critical_values_ad[4]:
+                print(key," is uniform based on AD test", ) 
+            else:
+                print(key," is not uniform based on AD test", ) 
+
+            # Fail test at 10% confidence level
+            assert statistic_ad < critical_values_ad[5]
+        
+        else:
+            print("Not sufficient unique values for state:",_state.name)
+        
+       
 
 
     
@@ -101,4 +156,4 @@ def test_run_env(env, single_agent_env):
 if __name__ == "__main__":
     import pytest
     import sys
-    sys.exit(pytest.main(["-v", __file__]))
+    sys.exit(pytest.main(["-sv", __file__]))
