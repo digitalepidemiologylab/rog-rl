@@ -6,8 +6,6 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-# from rog_rl.model import DiseaseSimModel
-# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 from rog_rl.env import RogSimBaseEnv
 
@@ -75,10 +73,10 @@ class RogSimEnv(RogSimBaseEnv):
 
 if __name__ == "__main__":
 
-    render = "PIL" # "ansi"  # change to "human"
+    render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
-                    height=5,
+                    height=7,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,
@@ -86,13 +84,12 @@ if __name__ == "__main__":
                     prob_infection=0.2,
                     prob_agent_movement=0.0,
                     disease_planner_config={
-                        "latent_period_mu":  2 * 4,
-                        "latent_period_sigma":  0,
                         "incubation_period_mu":  5 * 4,
                         "incubation_period_sigma":  0,
                         "recovery_period_mu":  14 * 4,
                         "recovery_period_sigma":  0,
                     },
+                    use_np_model=True,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=render,

@@ -7,8 +7,6 @@ import numpy as np
 
 
 from rog_rl.agent_state import AgentState
-# from rog_rl.model import DiseaseSimModel
-# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 from rog_rl.env import RogSimBaseEnv
 
