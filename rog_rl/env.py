@@ -67,9 +67,15 @@ class RogSimBaseEnv(gym.Env):
         self.action_space = self.set_action_space()
         self.observation_space = self.set_observation_space()
 
+        self.set_agent_state()
+        self.set_action_type()
+
         self._model = None
         self.running_score = None
         self.np_random = np.random
+
+        self.last_action = None
+        self.last_action_response = None
 
         self.renderer = False
 
@@ -99,6 +105,12 @@ class RogSimBaseEnv(gym.Env):
             [
                 len(ActionType), self.width, self.height
             ])
+    
+    def set_agent_state(self):
+        self.agent_state = AgentState
+    
+    def set_action_type(self):
+        self.action_type = ActionType
     
     def set_disease_model(self):
         if self.config['use_np_model']:
@@ -181,9 +193,18 @@ class RogSimBaseEnv(gym.Env):
         else:
             self.running_score = self.get_current_game_score(include_vaccine_score=True)
         self.cumulative_reward = 0
-        # return observation
+        observation = self.get_observation()
+        return self.post_process_observation(observation)
+
+    def get_observation(self):
         return self._model.get_observation()
 
+    def post_process_observation(self, observation):
+        return observation    
+    
+    def get_action_response(self):
+        return self.last_action_response
+    
     def initialize_renderer(self, mode="human"):
 
         if self.use_renderer in ["simple"]:
@@ -232,7 +253,7 @@ class RogSimBaseEnv(gym.Env):
             return [i for i in zip(idx[0], idx[1])]
         else:
             scheduler = self._model.get_scheduler()
-            return scheduler.get_agents_by_state()
+            return scheduler.get_agents_by_state(state)
 
 
     def get_agents_grid(self):
@@ -363,44 +384,8 @@ class RogSimBaseEnv(gym.Env):
 #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
 
-    def step(self, action):
-        # Handle dummy_simulation Mode
-        if self.dummy_simulation:
-            return self.dummy_env_step()
-
-        assert self.action_space.contains(
-            action), "%r (%s) invalid" % (action, type(action))
-        if self._model is None:
-            raise Exception("env.step() called before calling env.reset()")
-
-        action = [int(x) for x in action]
-        if self.debug:
-            print("Action : ", action)
-
-        # Handle action propagation in real simulator
-        action_type = action[0]
-        cell_x = action[1]
-        cell_y = action[2]
-
-        _observation = False
-        _done = False
-        _info = {}
-        if action_type == ActionType.STEP.value:
-            self._model.tick()
-            _observation = self._model.get_observation()
-        elif action_type == ActionType.VACCINATE.value:
-            vaccination_success, response = \
-                self._model.vaccinate_cell(cell_x, cell_y)
-            _observation = self._model.get_observation()
-
-            # Force Run simulation to completion if
-            # run out of vaccines
-            if response == VaccinationResponse.AGENT_VACCINES_EXHAUSTED:
-                while self._model.is_running():
-                    self._model.tick()
-                    _observation = self._model.get_observation()
-
-        # Compute difference in game score
+    def calculate_rewards(self):
+         # Compute difference in game score
         if self.vaccine_score_weight < 0:
             current_score = self.get_current_game_score(include_vaccine_score=False)
             _step_reward = current_score - self.running_score
@@ -412,9 +397,45 @@ class RogSimBaseEnv(gym.Env):
             self.running_score = current_score
             _done = not self._model.is_running()
             if _done:
-                susecptible_percentage = self.get_current_game_score(include_vaccine_score=False)
-                _step_reward -= (current_score - susecptible_percentage) * self.vaccine_score_weight
+                _step_reward = self.terminal_reward(current_score, _step_reward)
             self.cumulative_reward += _step_reward
+
+        return _step_reward
+    
+    
+    def terminal_reward(self, current_score, _step_reward):
+        susecptible_percentage = self.get_current_game_score(include_vaccine_score=False)
+        _step_reward -= (current_score - susecptible_percentage) * self.vaccine_score_weight
+        return _step_reward    
+    
+    def step_action(self, action):
+
+        _observation = False
+
+        response = "STEP"
+      
+        return _observation, response
+    
+    
+    def step(self, action):
+        # Handle dummy_simulation Mode
+        if self.dummy_simulation:
+            return self.dummy_env_step()
+
+        assert self.action_space.contains(
+            action), "%r (%s) invalid" % (action, type(action))
+        if self._model is None:
+            raise Exception("env.step() called before calling env.reset()")
+
+        _done = False
+        _info = {}
+
+        _observation, response = self.step_action(action)
+
+        self.last_action = action
+        self.last_action_response = response
+
+        _step_reward = self.calculate_rewards()
 
         # Add custom game metrics to info key
         game_metrics = self.get_current_game_metrics()
@@ -423,6 +444,8 @@ class RogSimBaseEnv(gym.Env):
 
         _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
+
+        _observation = self.post_process_observation(_observation)
         return _observation, _step_reward, _done, _info
 
     def dummy_env_step(self):

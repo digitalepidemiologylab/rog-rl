@@ -9,6 +9,6 @@ from rog_rl.envs.rog_sim_single_agent_env import RogSimSingleAgentEnv  # noqa
 
 from gym.envs.registration import register
 
-register(id='RogRBase-v0',
+register(id='RogRLBase-v0',
          entry_point='rog_rl.env:RogSimBaseEnv',
          )
