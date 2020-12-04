@@ -132,9 +132,9 @@ class DiseaseSimModel:
                              
         # Initial vaccinate  - Skipped for now - Ignore locations infected and vaccinate in similar manner
         n_vaccine_init = int(self.initial_vaccination_fraction * self.n_agents)
-        not_infected = list(set(np.arange(self.width * self.height)) - set(infect_list))
+        not_infected = list(set(np.arange(self.height * self.height)) - set(infect_list))
         vaccinate_list = self.rng.choice(not_infected, size=n_vaccine_init, replace=False)
-        vaccinate_locs = (vaccinate_list // self.width, vaccinate_list % self.height)
+        vaccinate_locs = (vaccinate_list // self.height, vaccinate_list % self.height)
         vaccinate_mask = np.zeros(self.gridshape, dtype=np.bool)
         vaccinate_mask[vaccinate_locs] = True
         self.observation[vaccinate_mask] = 0
@@ -142,11 +142,12 @@ class DiseaseSimModel:
         self.max_vaccines = self.n_vaccines + n_vaccine_init
                             
     def _sample_tvals(self, mu, sigma, minvals):
-        minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
-        if sigma > 0:
-            a = (minv - mu) / sigma 
-        else:
-            a = (minv - mu) * np.inf
+        assert sigma >= 0
+        if sigma == 0:
+            t = np.maximum(minvals, np.zeros_like(minvals) + mu)
+        elif sigma > 0:
+            minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
+            a = (minv - mu) / sigma
 #         maxv = np.inf
 #         b = (maxv - mu) / sigma
         b = np.zeros_like(a) + np.inf
