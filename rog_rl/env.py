@@ -6,8 +6,6 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-# from rog_rl.model import DiseaseSimModel
-# from rog_rl.model_np import DiseaseSimModel
 from rog_rl.vaccination_response import VaccinationResponse
 
 class ActionType(Enum):
@@ -210,15 +208,10 @@ class RogSimBaseEnv(gym.Env):
         if self.use_renderer in ["simple"]:
             self.metadata = {'render.modes': ['simple', 'rgb_array'],
                     'video.frames_per_second': 5}
-            self.renderer = True
-            self.colors = [(0,255,0), (255, 0, 255), (255, 0, 0), 
-                           (255, 200, 200), (0, 0, 255), (255, 255, 0)]
-            minimagesize = 60
-            self.render_scale = np.int32(max([1,
-                                              np.ceil(minimagesize//(3*self.width)),
-                                              np.ceil(minimagesize//(3*self.height))]))
-            self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
-            return
+            from rog_rl.renderer import SimpleRenderer
+            self.renderer = SimpleRenderer(
+                    grid_size=(self.width, self.height)
+                )
 
         elif mode in ["human", "rgb_array"]:
             self.metadata = {'render.modes': ['human', 'rgb_array'],
@@ -316,6 +309,10 @@ class RogSimBaseEnv(gym.Env):
             _simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
 
+        if self.use_renderer == 'simple':
+            obs = self.get_observation()
+            return self.renderer.get_render_output(obs)
+        
         for _state in AgentState:
             key = "population.{}".format(_state.name)
             stats = state_metrics[key]
@@ -482,26 +479,8 @@ class RogSimBaseEnv(gym.Env):
         if not self.use_renderer:
             return
 
-        if self.use_renderer == "simple":
-            k = 3
-            arr = np.zeros((self.width * k, self.height * k, 3), np.uint8) + 255
-            state2col = np.zeros((self.width, self.height, 3), np.uint8)
-            # Swap states to colors
-            for i,c in enumerate(self.colors):
-                state2col[obs[...,i].astype(bool), :] = c
-            
-            # Puts value in spaced grid
-            arr[k//2::k, k//2::k] = state2col 
-            
-            # Upsamples the image
-            rgb_obs = np.kron(arr, self.scaler)
-
-            return rgb_obs
-
         if not self.renderer:
             self.initialize_renderer(mode=mode)
-
-
 
         return self.update_renderer(mode=mode)
 

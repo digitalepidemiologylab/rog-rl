@@ -33,9 +33,7 @@ class DiseaseSimModel:
         prob_infection=0.2,
         prob_agent_movement=0.0,
         disease_planner_config={
-            "latent_period_mu":  2 * 4,
-            "latent_period_sigma":  0,
-            "incubation_period_mu":  5 * 4,
+            "incubation_period_mu":  7 * 4,
             "incubation_period_sigma":  0,
             "recovery_period_mu":  14 * 4,
             "recovery_period_sigma":  0,
@@ -99,36 +97,29 @@ class DiseaseSimModel:
         self.schedule_steps = 0
 
         # Initialize time values
-        latent_period_mu=self.disease_planner_config["latent_period_mu"]
-        latent_period_sigma=self.disease_planner_config["latent_period_sigma"]
         incubation_period_mu=self.disease_planner_config["incubation_period_mu"]
         incubation_period_sigma=self.disease_planner_config["incubation_period_sigma"]
         recovery_period_mu=self.disease_planner_config["recovery_period_mu"]
         recovery_period_sigma=self.disease_planner_config["recovery_period_sigma"]
         
-        self.exposure_tvals = np.zeros(self.gridshape)
-        self.latent_tvals = self._sample_tvals(latent_period_mu,
-                                              latent_period_sigma,
-                                              self.exposure_tvals)
+        exposure_tvals = np.zeros(self.gridshape)
         self.incubation_tvals = self._sample_tvals(incubation_period_mu,
-                                              incubation_period_sigma,
-                                              self.latent_tvals)
+                                                  incubation_period_sigma,
+                                                  exposure_tvals)
         self.recovery_tvals = self._sample_tvals(recovery_period_mu,
-                                              recovery_period_sigma,
-                                              self.incubation_tvals)
-        self.transition_map = {AgentState.SUSCEPTIBLE: [AgentState.EXPOSED, self.exposure_tvals],
-                                AgentState.EXPOSED: [AgentState.INFECTIOUS, self.latent_tvals],
-                                AgentState.INFECTIOUS: [AgentState.SYMPTOMATIC, self.incubation_tvals],
-                                AgentState.SYMPTOMATIC: [AgentState.RECOVERED, self.recovery_tvals],}
+                                                 recovery_period_sigma,
+                                                 self.incubation_tvals)
+        self.transition_map = {AgentState.SUSCEPTIBLE: [AgentState.INFECTIOUS, self.incubation_tvals],
+                                AgentState.INFECTIOUS: [AgentState.RECOVERED, self.recovery_tvals],}
         # Infect
         n_infect = int(self.initial_infection_fraction * self.n_agents)
         infect_list = self.rng.choice(np.arange(self.width * self.height), 
                                        size=n_infect, replace=False)       
-        infect_locs = (infect_list // self.width, infect_list % self.height)
+        infect_locs = (infect_list // self.height, infect_list % self.height)
         self.infection_scheduled_grid[infect_locs] = True
         self.infection_base_time_grid[infect_locs] = self.schedule_steps
         self.observation[self.infection_scheduled_grid] = 0
-        self.observation[self.infection_scheduled_grid, AgentState.EXPOSED.value] = 1
+        self.observation[self.infection_scheduled_grid, AgentState.INFECTIOUS.value] = 1
                              
         # Initial vaccinate  - Skipped for now - Ignore locations infected and vaccinate in similar manner
         n_vaccine_init = int(self.initial_vaccination_fraction * self.n_agents)
@@ -148,12 +139,13 @@ class DiseaseSimModel:
         elif sigma > 0:
             minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
             a = (minv - mu) / sigma
-#         maxv = np.inf
-#         b = (maxv - mu) / sigma
-        b = np.zeros_like(a) + np.inf
-        # truncnorm.rvs can draw from a 1D array of distributions - 
-        # But the size parameter doesn't work in multi distribution
-        t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
+#             maxv = np.inf
+#             b = (maxv - mu) / sigma
+            b = np.zeros_like(a) + np.inf
+            # truncnorm.rvs can draw from a 1D array of distributions - 
+            # But the size parameter doesn't work in multi distribution
+            t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
+            
         tvals = np.int32(t.reshape(self.gridshape))
         return tvals
    
@@ -216,25 +208,16 @@ class DiseaseSimModel:
             if self.only_count_successful_vaccines:
                 self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
-        elif agent_state == AgentState.EXPOSED.value:
-            # Case 3 : Agent is already exposed, and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_EXPOSED
         elif agent_state == AgentState.INFECTIOUS.value:
-            # Case 4 : Agent is already infectious,
-            # and its a waste of vaccination
+            # Agent is already Infectious, its a waste of vaccination
             return False, VaccinationResponse.AGENT_INFECTIOUS
-        elif agent_state == AgentState.SYMPTOMATIC.value:
-            # Case 5 : Agent is already Symptomatic,
-            # and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_SYMPTOMATIC
         elif agent_state == AgentState.RECOVERED.value:
-            # Case 6 : Agent is already Recovered,
-            # and its a waste of vaccination
+            # Agent is already Recovered, its a waste of vaccination
             return False, VaccinationResponse.AGENT_RECOVERED
         elif agent_state == AgentState.VACCINATED.value:
-            # Case 7 : Agent is already Vaccination,
-            # and its a waste of vaccination
+            # Agent is already Vaccinated, its a waste of vaccination
             return False, VaccinationResponse.AGENT_VACCINATED
+        
         raise NotImplementedError()
 
     ###########################################################################
@@ -285,8 +268,7 @@ class DiseaseSimModel:
     def propagate_infections_np(self):
         
         # Infect neighbours
-        infectious = self.observation[..., AgentState.INFECTIOUS.value] + \
-                     self.observation[..., AgentState.SYMPTOMATIC.value]
+        infectious = self.observation[..., AgentState.INFECTIOUS.value]
         infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1, 
                                          mode='same', boundary=self.boundary)
 #         p = np.zeros(self.gridshape) + self.prob_infection
@@ -310,8 +292,6 @@ if __name__ == "__main__":
         prob_infection=1.0,
         prob_agent_movement=0.0,
         disease_planner_config={
-            "latent_period_mu":  2 * 4,
-            "latent_period_sigma":  0,
             "incubation_period_mu":  5 * 4,
             "incubation_period_sigma":  0,
             "recovery_period_mu":  14 * 4,
@@ -338,7 +318,6 @@ if __name__ == "__main__":
         # print(per_step_times[-1])
         # print(model.datacollector.get_model_vars_dataframe())
         # print("S", model.schedule.get_agent_count_by_state(AgentState.SUSCEPTIBLE))  # noqa
-        # print("E", model.schedule.get_agent_count_by_state(AgentState.EXPOSED))  # noqa
         # print("I", model.schedule.get_agent_count_by_state(AgentState.INFECTIOUS))  # noqa
         # print("R", model.schedule.get_agent_count_by_state(AgentState.RECOVERED))  # noqa
         # print(viz.render())

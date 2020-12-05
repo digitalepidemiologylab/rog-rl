@@ -44,22 +44,10 @@ def build_server(grid_width=50, grid_height=50):
                                                 AgentState.SUSCEPTIBLE))
                                     },
                                     {
-                                        "Label": "Exposed",
-                                        "Color": "rgb{}".format(
-                                            COLOR_MAP.get_color(
-                                                AgentState.EXPOSED))
-                                    },
-                                    {
                                         "Label": "Infectious",
                                         "Color": "rgb{}".format(
                                             COLOR_MAP.get_color(
                                                 AgentState.INFECTIOUS))
-                                    },
-                                    {
-                                        "Label": "Symptomatic",
-                                        "Color": "rgb{}".format(
-                                            COLOR_MAP.get_color(
-                                                AgentState.SYMPTOMATIC))
                                     },
                                     {
                                         "Label": "Recovered",

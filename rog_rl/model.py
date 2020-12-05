@@ -189,9 +189,7 @@ class DiseaseSimModel(Model):
         self.datacollector = DataCollector(
             model_reporters={
                 "Susceptible": lambda m: m.get_population_fraction_by_state(AgentState.SUSCEPTIBLE),  # noqa
-                "Exposed": lambda m: m.get_population_fraction_by_state(AgentState.EXPOSED),  # noqa
                 "Infectious": lambda m: m.get_population_fraction_by_state(AgentState.INFECTIOUS),  # noqa
-                "Symptomatic": lambda m: m.get_population_fraction_by_state(AgentState.SYMPTOMATIC),  # noqa
                 "Recovered": lambda m: m.get_population_fraction_by_state(AgentState.RECOVERED),  # noqa
                 "Vaccinated": lambda m: m.get_population_fraction_by_state(AgentState.VACCINATED),  # noqa
                 "R0/10": lambda m: m.contact_network.compute_R0()/10.0
@@ -266,17 +264,10 @@ class DiseaseSimModel(Model):
             if self.only_count_successful_vaccines:
                 self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
-        elif agent.state == AgentState.EXPOSED:
-            # Case 3 : Agent is already exposed, and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_EXPOSED
         elif agent.state == AgentState.INFECTIOUS:
             # Case 4 : Agent is already infectious,
             # and its a waste of vaccination
             return False, VaccinationResponse.AGENT_INFECTIOUS
-        elif agent.state == AgentState.SYMPTOMATIC:
-            # Case 5 : Agent is already Symptomatic,
-            # and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_SYMPTOMATIC
         elif agent.state == AgentState.RECOVERED:
             # Case 6 : Agent is already Recovered,
             # and its a waste of vaccination
@@ -396,7 +387,6 @@ if __name__ == "__main__":
         # print(per_step_times[-1])
         # print(model.datacollector.get_model_vars_dataframe())
         # print("S", model.schedule.get_agent_count_by_state(AgentState.SUSCEPTIBLE))  # noqa
-        # print("E", model.schedule.get_agent_count_by_state(AgentState.EXPOSED))  # noqa
         # print("I", model.schedule.get_agent_count_by_state(AgentState.INFECTIOUS))  # noqa
         # print("R", model.schedule.get_agent_count_by_state(AgentState.RECOVERED))  # noqa
         # print(viz.render())

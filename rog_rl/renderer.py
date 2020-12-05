@@ -708,6 +708,51 @@ class PILRenderer(Renderer):
             self.image.show()
         if return_rgb_array:
             return rgb_array
+        
+class SimpleRenderer:
+    def __init__(self, grid_size):
+        self.width, self.height = grid_size
+        self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
+        minimagesize = 60
+        self.render_scale = np.int32(max([1,
+                                          np.ceil(minimagesize//(3*self.width)),
+                                          np.ceil(minimagesize//(3*self.height))]))
+        self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
+        self.stats = {}
+        
+    def setup(self, mode):
+        pass
+    
+    def update_stats(self, key, value):
+        if type(value) != str:
+            raise Exception("renderer.stats value is not String")
+        self.stats[key] = value
+        
+    def get_render_output(self, obs):
+        
+        k = 3
+        arr = np.zeros((self.width * k, self.height * k, 3), np.uint8) + 255
+        state2col = np.zeros((self.width, self.height, 3), np.uint8)
+        # Swap states to colors
+        for i,c in enumerate(self.colors):
+            state2col[obs[...,i].astype(bool), :] = c
+        
+        vx = self.stats.get("VACC_AGENT_X", None)
+        vy = self.stats.get("VACC_AGENT_Y", None)
+        if vx is not None and vy is not None:
+            pass
+
+        # Puts value in spaced grid
+        arr[k//2::k, k//2::k] = state2col 
+
+        # Upsamples the image
+        rgb_obs = np.kron(arr, self.scaler)
+
+        return rgb_obs
+        
+            
+    
+    
 
 if __name__ == "__main__":
 

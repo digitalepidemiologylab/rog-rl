@@ -92,18 +92,8 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
         """
         vaccination_agent_channel = np.zeros((self.width, self.height))
         vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
-
-        INFECTED_CHANNEL = observation[... , AgentState.EXPOSED.value] + \
-                           observation[... , AgentState.SYMPTOMATIC.value] + \
-                           observation[... , AgentState.INFECTIOUS.value]
         
-        p_obs = np.dstack([
-            observation[... , AgentState.SUSCEPTIBLE.value],
-            INFECTED_CHANNEL,
-            observation[... , AgentState.RECOVERED.value],
-            observation[... , AgentState.VACCINATED.value],
-            vaccination_agent_channel]
-        )
+        p_obs = np.dstack([observation, vaccination_agent_channel])
 
         return np.uint8(p_obs)
 
