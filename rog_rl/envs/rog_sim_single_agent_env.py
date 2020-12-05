@@ -179,6 +179,7 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
 
 if __name__ == "__main__":
 
+    np.random.seed(100)
     render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
@@ -204,7 +205,8 @@ if __name__ == "__main__":
                     use_np_model=True,
                     toric=False,
                     dummy_simulation=False,
-                    debug=True)
+                    debug=True,
+                    seed = 0)
     env = RogSimSingleAgentEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
@@ -228,6 +230,7 @@ if __name__ == "__main__":
             SIM_TICK = 5
         """)
         # _action = int(input("Enter action - ex : "))
+        env.action_space.seed(k)
         _action = env.action_space.sample()
 
         print("Action : ", _action)
@@ -241,3 +244,4 @@ if __name__ == "__main__":
         print("="*100)
         # print(observation.shape)
         # print(k, reward, done)
+    print(np.sum(observation,axis=0))

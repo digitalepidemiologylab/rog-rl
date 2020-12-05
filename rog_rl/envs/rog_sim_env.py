@@ -74,8 +74,8 @@ class RogSimEnv(RogSimBaseEnv):
 
 
 if __name__ == "__main__":
-
-    render = "PIL" # "ansi"  # change to "human"
+    np.random.seed(0)
+    render = "simple" # "PIL" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
                     height=5,
@@ -98,7 +98,8 @@ if __name__ == "__main__":
                     use_renderer=render,
                     toric=False,
                     dummy_simulation=False,
-                    debug=True)
+                    debug=True,
+                    seed = 0)
     env = RogSimEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
@@ -113,6 +114,7 @@ if __name__ == "__main__":
     if not record:
         env.render(mode=render)
     while not done:
+        env.action_space.seed(k)
         _action = env.action_space.sample()
         # _action = input("Enter action - ex: [1, 4, 2] : ")
         # if _action.strip() == "":
@@ -127,7 +129,6 @@ if __name__ == "__main__":
         if not record:
             env.render(mode=render)
         k += 1
-
         # print(observation.shape)
         # print(k, reward, done)
-    # print(observation.shape())
+    print(np.sum(observation,axis=0))
