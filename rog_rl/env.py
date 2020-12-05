@@ -41,6 +41,7 @@ class RogSimBaseEnv(gym.Env):
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "simple", "ansi"
                     toric=True,
+                    fast_complete_simulation=True,
                     dummy_simulation=False,
                     debug=False)
         self.config = {}
@@ -148,6 +149,7 @@ class RogSimBaseEnv(gym.Env):
         early_stopping_patience = \
             self.config['early_stopping_patience']
         toric = self.config['toric']
+        fast_complete_simulation = self.config['fast_complete_simulation']
 
         """
         Seeding Strategy :
@@ -170,6 +172,7 @@ class RogSimBaseEnv(gym.Env):
             disease_planner_config,
             max_simulation_timesteps, early_stopping_patience,
             only_count_successful_vaccines,
+            fast_complete_simulation,
             toric, seed=_simulator_instance_seed
         )
 
@@ -518,6 +521,7 @@ if __name__ == "__main__":
                     early_stopping_patience=14,
                     use_renderer=render,
                     use_model_np=True,
+                    fast_complete_simuation=True,
                     toric=False,
                     dummy_simulation=False,
                     debug=True)

@@ -55,19 +55,11 @@ class RogSimEnv(RogSimBaseEnv):
         
         if action_type == ActionType.STEP.value:
             self._model.tick()
-            _observation = self.get_observation()
         elif action_type == ActionType.VACCINATE.value:
             vaccination_success, response = \
                 self._model.vaccinate_cell(cell_x, cell_y)
-            _observation = self.get_observation()
-
-            # Force Run simulation to completion if
-            # run out of vaccines
-            if response == VaccinationResponse.AGENT_VACCINES_EXHAUSTED:
-                while self._model.is_running():
-                    self._model.tick()
-                    _observation = self.get_observation()
-        
+                    
+        _observation = self.get_observation()
         return _observation, response
 
 

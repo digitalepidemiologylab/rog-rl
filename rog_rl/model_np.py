@@ -5,6 +5,7 @@ from rog_rl.vaccination_response import VaccinationResponse
 from scipy.stats import truncnorm
 from scipy.signal import convolve2d
 from collections import deque
+from skimage.measure import label as connected_components
 
 from rog_rl.vaccination_response import VaccinationResponse
 
@@ -41,6 +42,7 @@ class DiseaseSimModel:
         max_timesteps=200,
         early_stopping_patience=14,
         only_count_successful_vaccines=True,
+        fast_complete_simulation=True,
         toric=True,
         seed=None
     ):
@@ -75,6 +77,8 @@ class DiseaseSimModel:
         self.gridshape = (self.width, self.height)
         self.neighbor_kernel_r1 = np.ones((3,3))
         self.neighbor_kernel_r1[1,1] = 0
+        
+        self.fast_complete_simulation = fast_complete_simulation and not toric
         
         self.initialize_np()
 
@@ -176,6 +180,8 @@ class DiseaseSimModel:
         """
         A model step. Used for collecting data and advancing the schedule
         """
+        if not self.running:
+            return
         self.schedule_steps += 1
         self.propagate_infections_np()
         self.last_n_susceptible_fractions.append(
@@ -193,33 +199,47 @@ class DiseaseSimModel:
         of types
         (boolean, VaccinationResponse)
         """
-
+        if not self.running:
+            return False, VaccinationResponse.SIMULATION_NOT_RUNNING
+        
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
+        
         if not self.only_count_successful_vaccines:
             self.n_vaccines -= 1
+            
+        success = False
 
         agent_state = np.argmax(self.observation[cell_x, cell_y])
         if agent_state == AgentState.SUSCEPTIBLE.value:
             # Case 2 : Agent is susceptible, and can be vaccinated
-            self.observation[cell_x, cell_y] = 0
-            self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
             if self.only_count_successful_vaccines:
                 self.n_vaccines -= 1
-            return True, VaccinationResponse.VACCINATION_SUCCESS
+                
+            if self.n_vaccines >= 0:
+                self.observation[cell_x, cell_y] = 0
+                self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
+               
+            response = VaccinationResponse.VACCINATION_SUCCESS
+            success = True
         elif agent_state == AgentState.INFECTIOUS.value:
             # Agent is already Infectious, its a waste of vaccination
-            return False, VaccinationResponse.AGENT_INFECTIOUS
+            response = VaccinationResponse.AGENT_INFECTIOUS
         elif agent_state == AgentState.RECOVERED.value:
             # Agent is already Recovered, its a waste of vaccination
-            return False, VaccinationResponse.AGENT_RECOVERED
+            response = VaccinationResponse.AGENT_RECOVERED
         elif agent_state == AgentState.VACCINATED.value:
             # Agent is already Vaccinated, its a waste of vaccination
-            return False, VaccinationResponse.AGENT_VACCINATED
-        
-        raise NotImplementedError()
+            response = VaccinationResponse.AGENT_VACCINATED
+        else:
+            raise NotImplementedError()
 
+        # If vaccines finished, run the simulation to end
+        if self.n_vaccines == 0:
+            self.run_simulation_to_end()
+            
+        return success, response
     ###########################################################################
     ###########################################################################
     # Misc
@@ -249,6 +269,40 @@ class DiseaseSimModel:
             if len(set(self.last_n_susceptible_fractions)) == 1:
                 self.running = False
                 return
+            
+    def run_simulation_to_end(self):
+        """
+        Finds the final state of the simulation and sets that as the observation
+        Also sets self.running to True
+        """
+        if self.fast_complete_simulation:
+            
+            obs = self.observation.copy()
+            sus = obs[...,AgentState.SUSCEPTIBLE.value]
+
+            rec = obs[...,AgentState.RECOVERED.value]
+            sym = np.int32(self.infection_scheduled_grid) - rec
+            assert np.all(sym >= 0)
+
+            ss = sus + sym
+            comps = connected_components(ss, background=0)
+            for cval in range(1, np.max(comps)+1):
+                match = (comps == cval)
+                if np.any(sym[match]):
+                    rec[match] = 1
+                    sus[match] = 0
+
+
+            self.observation[(rec == 1)] = 0
+            self.observation[(rec == 1), AgentState.RECOVERED.value] = 1
+            self.observation[(sus == 1)] = 0
+            self.observation[(sus == 1), AgentState.SUSCEPTIBLE.value] = 1
+            
+            self.running = False
+        else:
+            while self.running:
+                self.tick()
+
 
     def tick(self):
         """

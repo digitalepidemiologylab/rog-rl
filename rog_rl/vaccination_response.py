@@ -10,3 +10,4 @@ class VaccinationResponse(Enum):
     AGENT_RECOVERED = 5
     AGENT_VACCINATED = 6
     AGENT_VACCINES_EXHAUSTED = 7
+    SIMULATION_NOT_RUNNING = 8
