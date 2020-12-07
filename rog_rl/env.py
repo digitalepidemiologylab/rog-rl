@@ -58,10 +58,10 @@ class RogSimBaseEnv(gym.Env):
 
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
-        
+
 
         self.disease_model = self.set_disease_model()
-            
+
 
         self.action_space = self.set_action_space()
         self.observation_space = self.set_observation_space()
@@ -85,7 +85,7 @@ class RogSimBaseEnv(gym.Env):
 
     def update_configs(self, config = {}):
         self.config.update(config)
-    
+
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -102,20 +102,20 @@ class RogSimBaseEnv(gym.Env):
             [
                 len(ActionType), self.width, self.height
             ])
-    
+
     def set_agent_state(self):
         self.agent_state = AgentState
-    
+
     def set_action_type(self):
         self.action_type = ActionType
-    
+
     def set_disease_model(self):
         if self.config['use_np_model']:
             from rog_rl.model_np import DiseaseSimModel
         else:
             from rog_rl.model import DiseaseSimModel
         return DiseaseSimModel
-    
+
     def set_renderer(self, renderer):
         self.use_renderer = renderer
         if self.use_renderer:
@@ -176,6 +176,7 @@ class RogSimBaseEnv(gym.Env):
             toric, seed=_simulator_instance_seed
         )
 
+        self.env_reset()
         # Set the max timesteps of an env as the sum of :
         # - max_simulation_timesteps
         # - Number of Vaccines available
@@ -194,18 +195,24 @@ class RogSimBaseEnv(gym.Env):
         self.cumulative_reward = 0
         observation = self.get_observation()
         return observation
-    
+
+
+    def env_reset(self):
+        # Initialize location of vaccination agent
+        pass
+
+
     def get_observation(self):
         obs = self._model.get_observation()
         return self.post_process_observation(obs)
-         
+
 
     def post_process_observation(self, observation):
-        return observation    
-    
+        return observation
+
     def get_action_response(self):
         return self.last_action_response
-    
+
     def initialize_renderer(self, mode="human"):
 
         if self.use_renderer in ["simple"]:
@@ -247,7 +254,7 @@ class RogSimBaseEnv(gym.Env):
 
         self.renderer.setup(mode=mode)
 
-    
+
     def get_agents_by_state(self, state):
         if self.config['use_np_model']:
             obs = self._model.observation
@@ -266,8 +273,8 @@ class RogSimBaseEnv(gym.Env):
         else:
             scheduler = self._model.get_scheduler()
             return scheduler.get_agents_by_state()
-    
-    
+
+
     def get_agent_positions(self, agent):
         if self.config['use_np_model']:
             agent_x, agent_y = agent
@@ -276,7 +283,7 @@ class RogSimBaseEnv(gym.Env):
             agent_x, agent_y = agent.pos
             return agent_x, agent_y
 
-    
+
     def update_renderer(self, mode='human'):
         """
         Updates the latest board state on the renderer
@@ -312,10 +319,12 @@ class RogSimBaseEnv(gym.Env):
             _simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
 
+        self.update_env_renderer_stats()
+
         if self.use_renderer == 'simple':
             obs = self.get_observation()
             return self.renderer.get_render_output(obs)
-        
+
         for _state in AgentState:
             key = "population.{}".format(_state.name)
             stats = state_metrics[key]
@@ -353,6 +362,9 @@ class RogSimBaseEnv(gym.Env):
             if self.debug:
                 print(render_output)
             return render_output
+
+    def update_env_renderer_stats(self):
+        pass
 
     def get_current_game_score(self, include_vaccine_score):
         """
@@ -408,22 +420,22 @@ class RogSimBaseEnv(gym.Env):
             self.cumulative_reward += _step_reward
 
         return _step_reward
-    
-    
+
+
     def terminal_reward(self, current_score, _step_reward):
         susecptible_percentage = self.get_current_game_score(include_vaccine_score=False)
         _step_reward -= (current_score - susecptible_percentage) * self.vaccine_score_weight
-        return _step_reward    
-    
+        return _step_reward
+
     def step_action(self, action):
 
         _observation = False
 
         response = "STEP"
-      
+
         return _observation, response
-    
-    
+
+
     def step(self, action):
         # Handle dummy_simulation Mode
         if self.dummy_simulation:

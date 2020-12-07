@@ -36,10 +36,27 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
         self.vacc_agent_y = 0
 
         self._game_steps = 0
-        
-        
+
+    def env_reset(self):
+        # Initialize location of vaccination agent
+        self.vacc_agent_x = self.np_random.randint(self.width)
+        self.vacc_agent_y = self.np_random.randint(self.height)
+
+        self._game_steps = 1
+
+    def update_env_renderer_stats(self):
+        # Add VACC_AGENT coords to render state
+        self.renderer.update_stats(
+            "VACC_AGENT_X",
+            str(self.vacc_agent_x)
+        )
+        self.renderer.update_stats(
+            "VACC_AGENT_Y",
+            str(self.vacc_agent_y)
+        )
+
     def set_observation_space(self):
-                # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated
+        # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated
 
         """
         The observation space in this case will be of shape (width, height, 3)
@@ -76,8 +93,8 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
         return spaces.Discrete(
             len(ActionType)
         )
-    
-   
+
+
     def set_action_type(self):
         self.action_type = ActionType
 
@@ -92,7 +109,7 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
         """
         vaccination_agent_channel = np.zeros((self.width, self.height))
         vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
-        
+
         p_obs = np.dstack([observation, vaccination_agent_channel])
 
         return np.uint8(p_obs)
