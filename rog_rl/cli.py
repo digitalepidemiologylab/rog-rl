@@ -12,7 +12,7 @@ import click
               default=50,
               help="Height of the Grid"
               )
-def demo(width, height):
+def demo(width, height): # pragma: no cover
     """
     Demo script to test installation
     """
