@@ -711,21 +711,49 @@ class PILRenderer(Renderer):
         
 class SimpleRenderer:
     def __init__(self, grid_size):
+        
+        global cv2
+        import cv2
+        
         self.width, self.height = grid_size
         self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
-        minimagesize = 60
+        minimagesize = 120
         self.render_scale = np.int32(max([1,
                                           np.ceil(minimagesize//(3*self.width)),
                                           np.ceil(minimagesize//(3*self.height))]))
         self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
+
+        self.text_img = np.zeros((minimagesize, minimagesize, 3), np.uint8) + 255
+        text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated', 
+                'Vacs Left', 'Env Steps', 'Sim Ticks']
+        self.stat_keys = ['VACCINE_BUDGET', 'GAME_TICKS', 'SIMULATION_TICKS']
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.fontScale = 0.35
+        self.fontColor = (0,0,0)
+        self.lineType  = 1
+
+        for i, txt in enumerate(text):
+            org = (5, (i+1)*15)
+            cv2.putText(self.text_img, txt, org,
+                        self.font, self.fontScale, 
+                        self.fontColor, self.lineType)
+            org = (70, org[-1])
+            cv2.putText(self.text_img, ':', org,
+                        self.font, self.fontScale, 
+                        self.fontColor, self.lineType)
+        
+        # TODO: Seems like width and height are wrongly named throughout the env
+        scaled_height = 3 * self.width * self.render_scale
+        padheight = scaled_height - 120
+        pads = [(0, padheight), (0, 0), (0, 0)]
+        self.text_img = np.pad(self.text_img, pads)
+        
         self.stats = {}
         
     def setup(self, mode):
         pass
     
     def update_stats(self, key, value):
-        if type(value) != str:
-            raise Exception("renderer.stats value is not String")
         self.stats[key] = value
         
     def get_render_output(self, obs):
@@ -740,19 +768,37 @@ class SimpleRenderer:
         vx = self.stats.get("VACC_AGENT_X", None)
         vy = self.stats.get("VACC_AGENT_Y", None)
         if vx is not None and vy is not None:
-            pass
+            va_r = int(vx) * k
+            va_c = int(vy) * k
+            arr[va_r : va_r + k, va_c : va_c + k] = 0
 
         # Puts value in spaced grid
         arr[k//2::k, k//2::k] = state2col 
-
-        # Upsamples the image
-        rgb_obs = np.kron(arr, self.scaler)
-
-        return rgb_obs
         
+        # Upsamples the image
+        scaled_viz = np.kron(arr, self.scaler)
+        
+        # Add stats to text img
+        text_img = self.text_img.copy()
+        stat_text = []
+        for _state in AgentState:
+            key = "population.{}".format(_state.name)
+            value = self.stats[key]
+            stat_text.append('%0.4f' % value)
+        
+        for key in self.stat_keys:
+            value = self.stats[key]
+            stat_text.append('%05d' % int(value))
             
-    
-    
+        for i, txt in enumerate(stat_text):
+            org = (75, (i+1)*15)
+            cv2.putText(text_img, txt, org,
+                        self.font, self.fontScale, 
+                        self.fontColor, self.lineType)            
+        
+
+        rgb_obs = np.hstack([text_img, scaled_viz])
+        return rgb_obs
 
 if __name__ == "__main__":
 

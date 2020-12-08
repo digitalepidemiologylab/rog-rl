@@ -321,9 +321,13 @@ class RogSimBaseEnv(gym.Env):
 
         self.update_env_renderer_stats()
 
+        
         if self.use_renderer == 'simple':
+            for key in state_metrics:
+                self.renderer.update_stats(key, state_metrics[key])
             obs = self.get_observation()
             return self.renderer.get_render_output(obs)
+        
 
         for _state in AgentState:
             key = "population.{}".format(_state.name)
