@@ -220,6 +220,8 @@ class DiseaseSimModel:
             if self.n_vaccines >= 0:
                 self.observation[cell_x, cell_y] = 0
                 self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
+                # Remove the scheduled infection if vaccine is given before trigger
+                self.infection_scheduled_grid[cell_x, cell_y] = False
                
             response = VaccinationResponse.VACCINATION_SUCCESS
             success = True
@@ -281,6 +283,7 @@ class DiseaseSimModel:
             sus = obs[...,AgentState.SUSCEPTIBLE.value]
 
             rec = obs[...,AgentState.RECOVERED.value]
+            # Use the scheduled grid to find current infections and scheduled ones
             sym = np.int32(self.infection_scheduled_grid) - rec
             assert np.all(sym >= 0)
 
