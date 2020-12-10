@@ -36,7 +36,7 @@ class RogSimBaseEnv(gym.Env):
                     },
                     only_count_successful_vaccines=False,
                     vaccine_score_weight=-1,
-                    use_np_model=False,
+                    use_np_model=True,
                     max_simulation_timesteps=200,
                     early_stopping_patience=14,
                     use_renderer=False,  # can be "simple", "ansi"
@@ -75,6 +75,8 @@ class RogSimBaseEnv(gym.Env):
 
         self.last_action = None
         self.last_action_response = None
+        
+        assert config['use_np_model'], "Non np model is not supported, use use_np_model: True"
 
         self.renderer = False
 
