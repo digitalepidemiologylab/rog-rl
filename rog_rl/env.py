@@ -328,6 +328,12 @@ class RogSimBaseEnv(gym.Env):
             obs = self.get_observation()
             return self.renderer.get_render_output(obs)
 
+        elif self.use_renderer == 'ansi':
+            grid = self.get_agents_grid()
+            render_output = self.renderer.render(self.width,self.height,grid)
+            if self.debug:
+                print(render_output)
+            return render_output
 
         for _state in AgentState:
             key = "population.{}".format(_state.name)
@@ -360,12 +366,7 @@ class RogSimBaseEnv(gym.Env):
                 return_rgb_array = mode == "rgb_array"
             render_output = self.renderer.post_render(return_rgb_array)
             return render_output
-        elif mode == "ansi":
-            grid = self.get_agents_grid()
-            render_output = self.renderer.render(self.width,self.height,grid)
-            if self.debug:
-                print(render_output)
-            return render_output
+
 
     def update_env_renderer_stats(self):
         pass

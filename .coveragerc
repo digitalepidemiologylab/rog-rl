@@ -4,7 +4,13 @@ branch = True
 omit =
     # omit these old mesa file
     rog_rl/server.py
-    rog_rl/visualization.py 
+    rog_rl/visualization.py
+    rog_rl/disease_planner.py
+    rog_rl/model.py
+    rog_rl/contact_network.py
+    rog_rl/scheduler.py
+    rog_rl/agent.py
+    rog_rl/agent_event.py
 
 [report]
 # Regexes for lines to exclude from consideration
