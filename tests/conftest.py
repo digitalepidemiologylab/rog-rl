@@ -9,7 +9,8 @@ def runner():
     return CliRunner()
 
 
-@pytest.fixture(scope="module")
+@pytest.mark.skip(reason="legacy mesa model is not supported")
+# @pytest.fixture(scope="module")
 def all_mesa_envs():
     render = "simple" # "ansi"  # change to "PIL"
     env_config = dict(

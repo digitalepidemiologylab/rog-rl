@@ -9,8 +9,8 @@ np.random.seed(seed)
 random.seed(seed)
 
 
-def test_env_reproducable(all_envs, all_mesa_envs):
-    all_envs.extend(all_mesa_envs)
+def test_env_reproducable(all_envs):
+    # all_envs.extend(all_mesa_envs)
     for env in all_envs:
         env.seed(1)
         observation = env.reset()

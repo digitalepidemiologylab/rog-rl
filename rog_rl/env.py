@@ -73,8 +73,8 @@ class RogSimBaseEnv(gym.Env):
 
         self.last_action = None
         self.last_action_response = None
-        
-        assert config['use_np_model'], "Non np model is not supported, use use_np_model: True"
+
+        assert self.config['use_np_model'], "Non np model is not supported, use use_np_model: True"
 
         self.renderer = False
 
@@ -321,13 +321,13 @@ class RogSimBaseEnv(gym.Env):
 
         self.update_env_renderer_stats()
 
-        
+
         if self.use_renderer == 'simple':
             for key in state_metrics:
                 self.renderer.update_stats(key, state_metrics[key])
             obs = self.get_observation()
             return self.renderer.get_render_output(obs)
-        
+
 
         for _state in AgentState:
             key = "population.{}".format(_state.name)

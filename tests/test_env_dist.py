@@ -21,7 +21,7 @@ def kl_divergence(p, q):
     q = np.array(q)
     size_p = len(p)
     size_q = len(q)
-    if size_p == size_q:                 
+    if size_p == size_q:
         return np.sum(np.where(p != 0, p * np.log(p / q), 0))
     else:
         min_size = min(size_p, size_q)
@@ -52,7 +52,7 @@ def collect_env_data(env):
             k += 1
             for _state in AgentState:
                 key = "population.{}".format(_state.name)
-                infos[key].append(info[key]) 
+                infos[key].append(info[key])
         infos_runs.append(infos)
 
     return infos_runs
@@ -63,11 +63,13 @@ def test_env_distributions(env, single_agent_env):
     run_statistical_test(env, single_agent_env)
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def test_env_mesa_model_distributions(env, all_mesa_envs):
     env_mesa = all_mesa_envs[0]
     run_statistical_test(env, env_mesa)
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def test_single_agent_env_mesa_model_distributions(single_agent_env, all_mesa_envs):
     single_agent_env_mesa = all_mesa_envs[1]
     run_statistical_test(single_agent_env, single_agent_env_mesa)
@@ -94,7 +96,7 @@ def run_statistical_test(env1, env2):
     for _state in AgentState:
         key = "population.{}".format(_state.name)
         all_perm = permutations(range(n_runs), 2)
-        for perm in list(all_perm): 
+        for perm in list(all_perm):
             idx1 = perm[0]
             idx2 = perm[1]
             info_run1 = infos_runs[idx1]
@@ -109,7 +111,7 @@ def run_statistical_test(env1, env2):
     for _state in AgentState:
         key = "population.{}".format(_state.name)
         all_perm = permutations(range(n_runs), 2)
-        for run in range(n_runs): 
+        for run in range(n_runs):
             info_run1 = infos_runs[run]
             info_run2 = infos_runs_other_env[run]
             kl_val = kl_divergence(info_run1[key],info_run2[key])
@@ -132,28 +134,28 @@ def run_statistical_test(env1, env2):
         perc_vals = percentiles_other_env[key]
         if len(set(perc_vals)) > 1:
             T=stats.uniform(0,1).rvs(len(perc_vals), random_state=seed)
-            statistic_ad,critical_values_ad,significance_level=stats.anderson_ksamp([T,perc_vals])     
+            statistic_ad,critical_values_ad,significance_level=stats.anderson_ksamp([T,perc_vals])
             print(statistic_ad)
 
             # The critical values for significance levels 25%, 10%, 5%, 2.5%, 1%,
             # 0.5%, 0.1%.
 
-            # Check at 5% confidence level           
+            # Check at 5% confidence level
             if statistic_ad < critical_values_ad[4]:
-                print(key," is uniform based on AD test", ) 
+                print(key," is uniform based on AD test", )
             else:
-                print(key," is not uniform based on AD test", ) 
+                print(key," is not uniform based on AD test", )
 
             # Fail test at 10% confidence level
             assert statistic_ad < critical_values_ad[5]
-        
+
         else:
             print("Not sufficient unique values for state:",_state.name)
-        
-       
 
 
-    
+
+
+
 
 
 if __name__ == "__main__":
