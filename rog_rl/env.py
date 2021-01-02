@@ -40,6 +40,7 @@ class RogSimBaseEnv(gym.Env):
                     use_renderer=False,  # can be "simple", "ansi"
                     toric=True,
                     fast_complete_simulation=True,
+                    fast_forward=False,
                     dummy_simulation=False,
                     debug=False)
         self.config = {}

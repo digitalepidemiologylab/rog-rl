@@ -42,13 +42,9 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
         """
         The action space is composed of 5 discrete actions :
 
-        MOVE_N : Moves the vaccination-agent north
-        MOVE_E : Moves the vaccination-agent east
-        MOVE_W : Moves the vaccination-agent west
-        MOVE_S : Moves the vaccination-agent south
+        MOVE : Moves the vaccination-agent in fixed order
 
         VACCINATE : Vaccinates the current location of the vaccination-agent
-        SIM_TICK : adds a simulation tick to the disease model
         """
         return spaces.Discrete(
             len(ActionType)
@@ -61,7 +57,7 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
         if self.vacc_agent_x == self.width - 1:
             if self.vacc_agent_y == self.height - 1:
                 # Navigation Complete - Move to next time step
-                self._model.tick()
+                self._model.tick(self.config.get('fast_forward',False))
                 self.agent_reset()
             else:
                 self.vacc_agent_y += 1

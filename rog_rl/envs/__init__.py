@@ -13,5 +13,5 @@ gym.envs.register(
 
 gym.envs.register(
      id='RogRLSingleAgentAction-v0',
-     entry_point='rog_rl.envs.rog_sim_single_agent_env:RogSimSingleAgentActionEnv'
+     entry_point='rog_rl.envs.rog_sim_single_agent_action_env:RogSimSingleAgentActionEnv'
 )

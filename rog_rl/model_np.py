@@ -307,7 +307,15 @@ class DiseaseSimModel:
                 self.tick()
 
 
-    def tick(self):
+    def tick(self, fast_forward = False):
+        """
+        provides option for fast forwarding
+        """
+        while self.is_running():
+            self.tick_once()
+
+
+    def tick_once(self):
         """
         a mirror function for the internal step function
         to help avoid confusion in the RL codebases (with the RL step)
