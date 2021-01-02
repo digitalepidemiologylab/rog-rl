@@ -126,7 +126,7 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
             Handle SIM_TICK action
             """
             # Handle action propagation in real simulator
-            self._model.tick()
+            self._model.tick(self.config.get('fast_forward',False))
             _observation = self._model.get_observation()
             response = "STEP"
         elif action == ActionType.VACCINATE.value:

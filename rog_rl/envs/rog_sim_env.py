@@ -54,7 +54,7 @@ class RogSimEnv(RogSimBaseEnv):
         response = "STEP"
         
         if action_type == ActionType.STEP.value:
-            self._model.tick()
+            self._model.tick(self.config.get('fast_forward',False))
         elif action_type == ActionType.VACCINATE.value:
             vaccination_success, response = \
                 self._model.vaccinate_cell(cell_x, cell_y)

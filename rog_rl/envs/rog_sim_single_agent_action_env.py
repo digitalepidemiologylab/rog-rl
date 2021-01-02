@@ -130,6 +130,7 @@ if __name__ == "__main__":
                     use_np_model=True,
                     toric=False,
                     dummy_simulation=False,
+                    fast_forward=True,
                     debug=True,
                     seed = 0)
     env = RogSimSingleAgentActionEnv(config=env_config)

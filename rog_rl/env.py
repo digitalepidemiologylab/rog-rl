@@ -187,7 +187,7 @@ class RogSimBaseEnv(gym.Env):
 
 #         Tick model
         if not self.config["use_np_model"]:
-            self._model.tick() # Not needed for model_np
+            self._model.tick(self.config.get('fast_forward',False)) # Not needed for model_np
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(include_vaccine_score=False)
