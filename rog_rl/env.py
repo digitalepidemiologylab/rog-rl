@@ -58,15 +58,13 @@ class RogSimBaseEnv(gym.Env):
         self.use_renderer = self.config["use_renderer"]
         self.vaccine_score_weight = self.config["vaccine_score_weight"]
 
+        self.set_agent_state()
+        self.set_action_type()
 
         self.disease_model = self.set_disease_model()
 
-
         self.action_space = self.set_action_space()
         self.observation_space = self.set_observation_space()
-
-        self.set_agent_state()
-        self.set_action_type()
 
         self._model = None
         self.running_score = None
