@@ -10,7 +10,7 @@ def browser(pathname):
     webbrowser.open("file:" + pathname2url(os.path.abspath(pathname)))
 
 
-subprocess.call(['coverage', 'run', '--source', 'rog_rl', '-m', 'pytest'])
+subprocess.call(['xvfb-run', 'coverage', 'run', '--source', 'rog_rl', '-m', 'pytest'])
 subprocess.call(['coverage', 'report', '-m'])
 subprocess.call(['coverage', 'html'])
 

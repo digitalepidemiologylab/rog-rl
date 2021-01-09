@@ -1,19 +1,16 @@
 # Rog RL
 
-
 [![Build Status](https://travis-ci.org/spMohanty/RogRL.svg?branch=master)](https://travis-ci.org/spMohanty/RogRL)
 [![codecov](https://codecov.io/gh/spMohanty/RogRL/branch/master/graph/badge.svg)](https://codecov.io/gh/spMohanty/RogRL)
 [![Documentation Status](https://readthedocs.org/projects/rogrl/badge/?version=latest)](https://rogrl.readthedocs.io/en/latest/?badge=latest)
 
 ![](https://i.imgur.com/qPAu80s.png)
 
-
 A simple Gym environment for RL experiments around disease transmission in a grid world environment.
 
 ## Installation
 
-
-``` bash
+```bash
 pip install -U git+git://gitlab.aicrowd.com/rog-rl/rog-rl.git
 rog-rl-demo
 ```
@@ -22,7 +19,7 @@ and if everything went well, ideally you should see something along the lines of
 
 ## Usage
 
-``` python
+```python
 #! /usr/bin/env python
 
 from rog_rl import RogSimEnv
@@ -36,7 +33,8 @@ while not done:
 ```
 
 ### Usage with Simple Renderer
-``` python
+
+```python
 
 from rog_rl import RogSimEnv
 render = "simple"
@@ -68,12 +66,11 @@ while not done:
     env.render(mode=render)
 ```
 
-
 ## Available Configurations
 
 You can instantiate a RogSim enviornment with the following configuration options
 
-``` python
+```python
 
 
 _config =  dict(
@@ -104,6 +101,7 @@ env = RogEnv(config=_config)
 
 
 ```
+
 ## Contributing
 
 ### Writing code
@@ -114,7 +112,12 @@ tests::
 ```console
 flake8 rog-rl-baselines
 pytest --cov rog_rl
+
+# To run with xfvb
+# First Install xfvb using `sudo apt-get install -y xvfb`
+xvfb-run pytest --cov rog_rl
 ```
+
 ### Developer tips for VS Code users
 
 Add the below items in the `settings.json` file in the location `.vscode`
@@ -135,14 +138,9 @@ It can also be useful to enable source code debugging by making the below change
 "justMyCode": false
 ```
 
-
-
-
-
-
 * Free software: GNU General Public License v3
 * Documentation: https://rogrl.readthedocs.io.
 
-
 ## Author
+
 * Sharada Mohanty

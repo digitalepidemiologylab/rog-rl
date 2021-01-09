@@ -25,7 +25,7 @@ class RogSimState(Wrapper):
         obs = self.env.reset(*args, **kwargs)
         if hasattr(self.env, '_model'):            
             self.model = self.env._model
-        return {"obs": obs}
+        return obs
 
     def render(self, *args, **kwargs):
         return self.env.render(*args, **kwargs)
@@ -33,8 +33,8 @@ class RogSimState(Wrapper):
     def step(self, action):
         obs, rew, done, info = self.env.step(action)
         self.running_reward += rew
-        score = self.running_reward if done else 0
-        return obs, score, done, info
+        # score = self.running_reward if done else 0
+        return obs, rew, done, info
 
     def close(self):
         return self.env.close()
