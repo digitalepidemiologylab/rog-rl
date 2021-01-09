@@ -107,3 +107,4 @@ ENV/
 .vscode/
 recording/
 profile_stats_render
+coverage_html_report

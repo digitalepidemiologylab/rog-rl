@@ -2,7 +2,6 @@ import pytest
 import rog_rl.cli as cli
 
 
-@pytest.mark.skip(reason="Launches server")
 def test_demo(runner):
     result = runner.invoke(cli.demo, input='\n')
     assert result.exit_code == 0
