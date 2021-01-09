@@ -76,11 +76,7 @@ class ColorMap:
                 """
                 if _state == AgentState.SUSCEPTIBLE:
                     self.COLOR_MAP[_state] = self.COLORS.GREEN
-                elif _state == AgentState.EXPOSED:
-                    self.COLOR_MAP[_state] = self.COLORS.PURPLE
                 elif _state == AgentState.INFECTIOUS:
-                    self.COLOR_MAP[_state] = self.COLORS.BROWN
-                elif _state == AgentState.SYMPTOMATIC:
                     self.COLOR_MAP[_state] = self.COLORS.RED
                 elif _state == AgentState.RECOVERED:
                     self.COLOR_MAP[_state] = self.COLORS.BLUE
@@ -97,12 +93,8 @@ class ColorMap:
                 """
                 if _state == AgentState.SUSCEPTIBLE:
                     self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_GREEN
-                elif _state == AgentState.EXPOSED:
-                    self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_CYAN
                 elif _state == AgentState.INFECTIOUS:
-                    self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_MAGENTA  # noqa
-                elif _state == AgentState.SYMPTOMATIC:
-                    self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_RED
+                    self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_RED  # noqa
                 elif _state == AgentState.RECOVERED:
                     self.COLOR_MAP[_state] = self.ANSI_COLORS.FORE_BLUE
                 elif _state == AgentState.VACCINATED:

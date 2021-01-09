@@ -30,8 +30,6 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
     """
 
     def __init__(self,
-                 latent_period_mu=2 * 4,
-                 latent_period_sigma=1 * 4,
                  incubation_period_mu=5 * 4,
                  incubation_period_sigma=3 * 4,
                  recovery_period_mu=14 * 4,
@@ -39,19 +37,14 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
                  random=False
                  ):
 
-        self.latent_period_mu = latent_period_mu
-        self.latent_period_sigma = latent_period_sigma
         self.incubation_period_mu = incubation_period_mu
         self.incubation_period_sigma = incubation_period_sigma
         self.recovery_period_mu = recovery_period_mu
         self.recovery_period_sigma = recovery_period_sigma
 
         variable_list = [
-            latent_period_mu,
             incubation_period_mu,
             recovery_period_mu]
-        assert latent_period_mu != incubation_period_mu, \
-            "latent_period_mu cannot be equal to incubation_period_mu"
         assert incubation_period_mu != recovery_period_mu, \
             "incubation_period_mu cannot be equal to recovery_period_mu"
 
@@ -91,20 +84,6 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
 
         #############################################
         #############################################
-        # Compute Latent Period
-        # - Conditions :
-        #  - Latent Period has to be >= 0.
-        #############################################
-        #############################################
-        latent_period = -1
-        while True:
-            latent_period = round(self.random.normalvariate(
-                self.latent_period_mu, self.latent_period_sigma))
-            if latent_period >= 0:
-                break
-
-        #############################################
-        #############################################
         # Compute Incubation Period
         #
         # - Conditions :
@@ -116,7 +95,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         while True:
             incubation_period = round(self.random.normalvariate(
                 self.incubation_period_mu, self.incubation_period_sigma))
-            if incubation_period > latent_period:
+            if incubation_period > 0:
                 break
 
         #############################################
@@ -135,7 +114,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
             if recovery_period > incubation_period:
                 break
 
-        return latent_period, incubation_period, recovery_period
+        return incubation_period, recovery_period
 
     def build_disease_plan(self, disease_progression, base_timestep=0):
         #############################################

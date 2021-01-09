@@ -17,9 +17,9 @@ def test_agent_state():
 
     EXPECTED_STATE_NAMES = [
         "SUSCEPTIBLE",
-        "EXPOSED",
+        # "EXPOSED",
         "INFECTIOUS",
-        "SYMPTOMATIC",
+        # "SYMPTOMATIC",
         "RECOVERED",
         "VACCINATED"
     ]

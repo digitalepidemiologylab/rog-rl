@@ -35,11 +35,11 @@ while not done:
     observation, reward, done, info = env.step(env.action_space.sample())
 ```
 
-### Usage with ANSI Renderer
+### Usage with Simple Renderer
 ``` python
 
 from rog_rl import RogSimEnv
-render = "ansi"
+render = "simple"
 env_config = dict(
                 width=10,
                 height=10,
@@ -103,6 +103,36 @@ _config =  dict(
 env = RogEnv(config=_config)
 
 
+```
+## Contributing
+
+### Writing code
+
+When you're done making changes, check that your changes pass flake8 and the
+tests::
+
+```console
+flake8 rog-rl-baselines
+pytest --cov rog_rl
+```
+### Developer tips for VS Code users
+
+Add the below items in the `settings.json` file in the location `.vscode`
+
+```json
+{
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "markdown.previewFrontMatter": "show",
+    "python.formatting.provider": "autopep8",
+    "editor.formatOnSave": true
+}
+```
+
+It can also be useful to enable source code debugging by making the below changes in the `launch.json` file in the location `.vscode`
+
+```json
+"justMyCode": false
 ```
 
 

@@ -9,6 +9,7 @@ from rog_rl.disease_planner import SEIRDiseasePlanner
 import numpy as np
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def tests_sanity_of_parameters_provided():
     """
         Ensures that the parameters
@@ -44,6 +45,7 @@ def tests_sanity_of_parameters_provided():
                 )
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def tests_zero_sigma_gives_constant_values():
     """
     This tests that passing in 0 as sigma value for the

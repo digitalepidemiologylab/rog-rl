@@ -1,7 +1,9 @@
 from rog_rl.agent import DiseaseSimAgent
 from rog_rl.model import DiseaseSimModel
+import pytest
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def test_prob_movement_0():
     """
     Tests that prob_agent_movement works as
@@ -29,6 +31,7 @@ def test_prob_movement_0():
         assert agent.pos == (0, 0)
 
 
+@pytest.mark.skip(reason="legacy mesa model is not supported")
 def test_prob_movement_1():
     """
     Tests that prob_agent_movement works as

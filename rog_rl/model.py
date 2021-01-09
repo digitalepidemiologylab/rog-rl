@@ -46,6 +46,7 @@ class DiseaseSimModel(Model):
         },
         max_timesteps=200,
         early_stopping_patience=14,
+        only_count_successful_vaccines=False,
         toric=True,
         seed=None
     ):
@@ -84,6 +85,7 @@ class DiseaseSimModel(Model):
         )
         self.initialize_datacollector()
         self.running = True
+        self.only_count_successful_vaccines = only_count_successful_vaccines
         self.datacollector.collect(self)
 
     ###########################################################################
@@ -187,9 +189,7 @@ class DiseaseSimModel(Model):
         self.datacollector = DataCollector(
             model_reporters={
                 "Susceptible": lambda m: m.get_population_fraction_by_state(AgentState.SUSCEPTIBLE),  # noqa
-                "Exposed": lambda m: m.get_population_fraction_by_state(AgentState.EXPOSED),  # noqa
                 "Infectious": lambda m: m.get_population_fraction_by_state(AgentState.INFECTIOUS),  # noqa
-                "Symptomatic": lambda m: m.get_population_fraction_by_state(AgentState.SYMPTOMATIC),  # noqa
                 "Recovered": lambda m: m.get_population_fraction_by_state(AgentState.RECOVERED),  # noqa
                 "Vaccinated": lambda m: m.get_population_fraction_by_state(AgentState.VACCINATED),  # noqa
                 "R0/10": lambda m: m.contact_network.compute_R0()/10.0
@@ -250,7 +250,8 @@ class DiseaseSimModel(Model):
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
-        self.n_vaccines -= 1
+        if not self.only_count_successful_vaccines:
+            self.n_vaccines -= 1
 
         # Case 1 : Cell is empty
         if self.grid.is_cell_empty((cell_x, cell_y)):
@@ -260,18 +261,13 @@ class DiseaseSimModel(Model):
         if agent.state == AgentState.SUSCEPTIBLE:
             # Case 2 : Agent is susceptible, and can be vaccinated
             agent.set_state(AgentState.VACCINATED)
+            if self.only_count_successful_vaccines:
+                self.n_vaccines -= 1
             return True, VaccinationResponse.VACCINATION_SUCCESS
-        elif agent.state == AgentState.EXPOSED:
-            # Case 3 : Agent is already exposed, and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_EXPOSED
         elif agent.state == AgentState.INFECTIOUS:
             # Case 4 : Agent is already infectious,
             # and its a waste of vaccination
             return False, VaccinationResponse.AGENT_INFECTIOUS
-        elif agent.state == AgentState.SYMPTOMATIC:
-            # Case 5 : Agent is already Symptomatic,
-            # and its a waste of vaccination
-            return False, VaccinationResponse.AGENT_SYMPTOMATIC
         elif agent.state == AgentState.RECOVERED:
             # Case 6 : Agent is already Recovered,
             # and its a waste of vaccination
@@ -315,7 +311,18 @@ class DiseaseSimModel(Model):
                 self.running = False
                 return
 
-    def tick(self):
+    def tick(self, fast_forward = False):
+        """
+        provides option for fast forwarding
+        """
+        if fast_forward:
+            while self.is_running():
+                self.tick_once()
+        else:
+            self.tick_once()
+
+
+    def tick_once(self):
         """
         a mirror function for the internal step function
         to help avoid confusion in the RL codebases (with the RL step)
@@ -391,7 +398,6 @@ if __name__ == "__main__":
         # print(per_step_times[-1])
         # print(model.datacollector.get_model_vars_dataframe())
         # print("S", model.schedule.get_agent_count_by_state(AgentState.SUSCEPTIBLE))  # noqa
-        # print("E", model.schedule.get_agent_count_by_state(AgentState.EXPOSED))  # noqa
         # print("I", model.schedule.get_agent_count_by_state(AgentState.INFECTIOUS))  # noqa
         # print("R", model.schedule.get_agent_count_by_state(AgentState.RECOVERED))  # noqa
         # print(viz.render())

@@ -3,23 +3,29 @@ import sys
 import click
 
 
-@click.command()
+@click.command(name="demo")
 @click.option('--width',
-              default=50,
+              default=10,
               help="Width of the Grid"
               )
 @click.option('--height',
-              default=50,
+              default=10,
               help="Height of the Grid"
               )
-def demo(width, height):
+def demo(width, height): # pragma: no cover
     """
     Demo script to test installation
     """
-    from rog_rl.server import build_server  # noqa
+    from rog_rl import RogSimEnv
+    render = "ansi"
+    env = RogSimEnv({"debug": True, "width":width, "height": height, "use_np_model":True,
+                     "use_renderer": render})
 
-    server = build_server(width, height)
-    server.launch()
+    observation = env.reset()
+    done = False
+    while not done:
+        observation, reward, done, info = env.step(env.action_space.sample())
+        env.render(mode=render)
 
 
 @click.command(name="profile-perf")
