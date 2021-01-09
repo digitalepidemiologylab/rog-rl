@@ -14,28 +14,42 @@ import time
 
 """Tests for `rogi_rl` gym based env."""
 
-names = ['RogRL-v0','RogRLSingleAgent-v0']
+names = ['RogRL-v0','RogRLSingleAgent-v0','RogRLSingleAgentAction-v0','RogRLState-v0']
 
 
 @pytest.mark.parametrize('name, width, height, toric, dummy_simulation, \
-                         use_renderer,use_np_model', [
-    # (names[0], 5, 5, False, False, "human", True),
-    (names[0], 10, 10, True, False, "ansi", True),
-    (names[0], 10, 10, True, False, "PIL", True),
-    (names[0], 10, 10, True, False, "simple", True),
-    # (names[0], 10, 20, True, False, "simple", False),
-    (names[0], 20, 20, True, False, False, True),
-    (names[0], 20, 20, False, False, False, True),
-    # (names[1], 5, 5, False, False, "human", True),
-    (names[1], 10, 10, True, False, "ansi", True),
-    (names[1], 10, 10, True, False, "PIL", True),
-    (names[1], 10, 10, True, False, "simple", True),
-    # (names[1], 10, 20, True, False, "simple", False),
-    (names[1], 20, 20, True, False, False, True),
-    (names[1], 20, 20, False, False, False, True),
+                         use_renderer,use_np_model,fast_forward', [
+    # (names[0], 5, 5, False, False, "human", True, True),
+    (names[0], 10, 10, True, False, "ansi", True, True),
+    (names[0], 10, 10, True, False, "PIL", True, False),
+    (names[0], 10, 10, True, False, "simple", True, True),
+    # (names[0], 10, 20, True, False, "simple", False, False),
+    (names[0], 20, 20, True, False, False, True, False),
+    (names[0], 20, 20, False, False, False, True, True),
+    # (names[1], 5, 5, False, False, "human", True, True),
+    (names[1], 10, 10, True, False, "ansi", True, True),
+    (names[1], 10, 10, True, False, "PIL", True, False),
+    (names[1], 10, 10, True, False, "simple", True, True),
+    # (names[1], 10, 20, True, False, "simple", False, False),
+    (names[1], 20, 20, True, False, False, True, False),
+    (names[1], 20, 20, False, False, False, True, True),
+    # (names[2], 5, 5, False, False, "human", True, True),
+    (names[2], 10, 10, True, False, "ansi", True, True),
+    (names[2], 10, 10, True, False, "PIL", True, False),
+    (names[2], 10, 10, True, False, "simple", True, True),
+    # (names[2], 10, 20, True, False, "simple", False, False),
+    (names[2], 20, 20, True, False, False, True, False),
+    (names[2], 20, 20, False, False, False, True, True),
+    # (names[3], 5, 5, False, False, "human", True, True),
+    (names[3], 10, 10, True, False, "ansi", True, True),
+    (names[3], 10, 10, True, False, "PIL", True, False),
+    (names[3], 10, 10, True, False, "simple", True, True),
+    # (names[0], 10, 20, True, False, "simple", False, False),
+    (names[3], 20, 20, True, False, False, True, False),
+    (names[3], 20, 20, False, False, False, True, True),
 ])
 def test_env_instantiation(name, width, height, toric, dummy_simulation,
-                           use_renderer,use_np_model):
+                           use_renderer, use_np_model, fast_forward):
     """
     Test that standard gym env actions
     methods like reset, step
@@ -56,7 +70,8 @@ def test_env_instantiation(name, width, height, toric, dummy_simulation,
         use_renderer=use_renderer,
         debug=True,
         np_random=seed,
-        use_np_model=use_np_model
+        use_np_model=use_np_model,
+        fast_forward=fast_forward
     )
     env = gym.make(name, config=env_config)
     np.random.seed(seed)
@@ -65,6 +80,7 @@ def test_env_instantiation(name, width, height, toric, dummy_simulation,
         env = wrappers.Monitor(env,"recording",force=True)
     observation = env.reset()
     assert observation.shape[:2] == (width, height)
+    state, reward, done, info = None, None, False, None
     for i in range(n_action_types):
         action = env.action_space.sample()
         # Ensure we do both step and vaccinate
