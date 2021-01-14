@@ -9,9 +9,9 @@ from rog_rl import RogSimSingleAgentActionEnv  # noqa
 
 class RogSimState(Wrapper):
 
-    def __init__(self, config={}):
+    def __init__(self, config={}, name="RogRL-v0"):
         # super().__init__(config)
-        self.env = gym.make("RogRLSingleAgentAction-v0", config=config)
+        self.env = gym.make(name, config=config)
         if hasattr(self.env, '_model'):
             self.model = self.env._model
         self.action_space = self.env.action_space
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimState(config=env_config)
+    env = RogSimState(config=env_config, name="RogRLSingleAgent-v0")
     print("USE RENDERER ?", env.env.use_renderer)
     record = False
     if record:
@@ -107,7 +107,6 @@ if __name__ == "__main__":
 
         if not record:
             env.render(mode=render)
-        print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
         print("="*100)
         if k == 3:

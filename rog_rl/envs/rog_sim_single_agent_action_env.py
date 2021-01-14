@@ -39,7 +39,7 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
 
     def set_action_space(self):
         """
-        The action space is composed of 5 discrete actions :
+        The action space is composed of 2 discrete actions :
 
         MOVE : Moves the vaccination-agent in fixed order
 
