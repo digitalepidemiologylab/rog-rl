@@ -1,12 +1,11 @@
-import pytest
-from rog_rl.env import AgentState
 from rog_rl.env import ActionType
-from rog_rl.envs.rog_sim_single_agent_env import ActionType as SingleAgentActionType
+import pytest
 import numpy as np
 seed = 1
 
 
-@pytest.mark.skip(reason="TODO: condition that ensures env ends due to zero susceptible")
+@pytest.mark.skip(reason="TODO: condition that ensures env \
+    ends due to zero susceptible")
 def test_no_susceptible(all_envs):
     for env in all_envs:
         np.random.seed(seed)
@@ -20,13 +19,14 @@ def test_no_susceptible(all_envs):
             _action = env.action_space.sample()
             observation, reward, done, info = env.step(_action)
             susceptible_population = info['population.SUSCEPTIBLE']
-            step +=1
-        
+            step += 1
+
         if susceptible_population != 0:
             assert max_steps == step
 
 
-@pytest.mark.skip(reason="TODO: condition that ensures env ends due to early stop")
+@pytest.mark.skip(reason="TODO: condition that ensures env \
+    ends due to early stop")
 def test_early_stopping(env):
     np.random.seed(100)
     early_stop = 2
@@ -49,13 +49,13 @@ def test_early_stopping(env):
         else:
             early_stop_counter = 0
         previous_susceptible_population = int(susceptible_population)
-        step +=1
-    
-    print(early_stop,early_stop_counter)
+        step += 1
+
+    print(early_stop, early_stop_counter)
     if early_stop != early_stop_counter:
         assert max_steps == step
 
+
 if __name__ == "__main__":
-    import pytest
     import sys
     sys.exit(pytest.main(["-v", __file__]))

@@ -110,10 +110,10 @@ When you're done making changes, check that your changes pass flake8 and the
 tests::
 
 ```console
-flake8 rog-rl-baselines
+flake8 rog-rl tests
 pytest --cov rog_rl
 
-# To run with xfvb
+# To run with xvfb
 # First Install xfvb using `sudo apt-get install -y xvfb`
 xvfb-run pytest --cov rog_rl
 ```
