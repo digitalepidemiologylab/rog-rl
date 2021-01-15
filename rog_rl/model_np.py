@@ -312,8 +312,7 @@ class DiseaseSimModel:
         provides option for fast forwarding
         """
         if fast_forward:
-            while self.is_running():
-                self.tick_once()
+            self.run_simulation_to_end()
         else:
             self.tick_once()
 
