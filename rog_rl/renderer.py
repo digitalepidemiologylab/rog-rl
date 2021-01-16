@@ -9,6 +9,7 @@ from rog_rl.agent_state import AgentState
 
 
 from PIL import Image, ImageDraw, ImageFont
+import cv2
 
 
 class Renderer:
@@ -711,9 +712,6 @@ class PILRenderer(Renderer):
         
 class SimpleRenderer:
     def __init__(self, grid_size):
-        
-        global cv2
-        import cv2
         
         self.width, self.height = grid_size
         self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
