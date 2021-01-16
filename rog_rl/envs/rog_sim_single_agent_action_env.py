@@ -107,10 +107,10 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
 if __name__ == "__main__":
 
     np.random.seed(100)
-    render = "ansi" # "ansi"  # change to "human"
+    render = "simple" # "ansi"  # change to "human"
     env_config = dict(
                     width=5,
-                    height=5,
+                    height=7,
                     population_density=1.0,
                     vaccine_density=1.0,
                     initial_infection_fraction=0.04,

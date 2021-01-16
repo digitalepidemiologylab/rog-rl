@@ -717,8 +717,8 @@ class SimpleRenderer:
         self.colors = [(0,255,0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
         minimagesize = 120
         self.render_scale = np.int32(max([1,
-                                          np.ceil(minimagesize//(3*self.width)),
-                                          np.ceil(minimagesize//(3*self.height))]))
+                                          np.ceil(minimagesize/(3*self.width)),
+                                          np.ceil(minimagesize/(3*self.height))]))
         self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
 
         self.text_img = np.zeros((minimagesize, minimagesize, 3), np.uint8) + 255
