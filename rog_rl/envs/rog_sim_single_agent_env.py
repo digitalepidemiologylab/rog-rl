@@ -1,14 +1,12 @@
-import gym
 from gym import spaces, wrappers
-from gym.utils import seeding
 
 from enum import Enum
 import numpy as np
 
 
-from rog_rl.agent_state import AgentState
 from rog_rl.vaccination_response import VaccinationResponse
 from rog_rl.env import RogSimBaseEnv
+
 
 class ActionType(Enum):
     MOVE_N = 0
@@ -57,7 +55,6 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
 
     def set_observation_space(self):
         # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated
-
         """
         The observation space in this case will be of shape (width, height, 3)
         where we represent 4 channels of information across the grid
@@ -70,13 +67,12 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
         """
         self.observation_channels = 5
         return spaces.Box(
-                                    low=np.uint8(0),
-                                    high=np.uint8(1),
-                                    shape=(
-                                        self.width,
-                                        self.height,
-                                        self.observation_channels))
-
+            low=np.uint8(0),
+            high=np.uint8(1),
+            shape=(
+                self.width,
+                self.height,
+                self.observation_channels))
 
     def set_action_space(self):
         """
@@ -94,10 +90,8 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
             len(ActionType)
         )
 
-
     def set_action_type(self):
         self.action_type = ActionType
-
 
     def post_process_observation(self, observation):
         """
@@ -114,7 +108,6 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
 
         return np.uint8(p_obs)
 
-
     def step_action(self, action):
 
         _observation = False
@@ -126,7 +119,7 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
             Handle SIM_TICK action
             """
             # Handle action propagation in real simulator
-            self._model.tick(self.config.get('fast_forward',False))
+            self._model.tick(self.config.get('fast_forward', False))
             _observation = self._model.get_observation()
             response = "STEP"
         elif action == ActionType.VACCINATE.value:
@@ -185,31 +178,31 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
 if __name__ == "__main__":
 
     np.random.seed(100)
-    render = "simple" # "ansi"  # change to "human"
+    render = "simple"  # "ansi"  # change to "human"
     env_config = dict(
-                    width=5,
-                    height=7,
-                    population_density=1.0,
-                    vaccine_density=1.0,
-                    initial_infection_fraction=0.04,
-                    initial_vaccination_fraction=0,
-                    prob_infection=0.2,
-                    prob_agent_movement=0.0,
-                    disease_planner_config={
-                        "incubation_period_mu": 0,
-                        "incubation_period_sigma": 0,
-                        "recovery_period_mu": 20,
-                        "recovery_period_sigma": 0,
-                    },
-                    vaccine_score_weight=0.5,
-                    max_simulation_timesteps=20 * 20 * 10,
-                    early_stopping_patience=20,
-                    use_renderer=render,  # can be "human", "ansi"
-                    use_np_model=True,
-                    toric=False,
-                    dummy_simulation=False,
-                    debug=True,
-                    seed = 0)
+        width=5,
+        height=7,
+        population_density=1.0,
+        vaccine_density=1.0,
+        initial_infection_fraction=0.04,
+        initial_vaccination_fraction=0,
+        prob_infection=0.2,
+        prob_agent_movement=0.0,
+        disease_planner_config={
+            "incubation_period_mu": 0,
+            "incubation_period_sigma": 0,
+            "recovery_period_mu": 20,
+            "recovery_period_sigma": 0,
+        },
+        vaccine_score_weight=0.5,
+        max_simulation_timesteps=20 * 20 * 10,
+        early_stopping_patience=20,
+        use_renderer=render,  # can be "human", "ansi"
+        use_np_model=True,
+        toric=False,
+        dummy_simulation=False,
+        debug=True,
+        seed=0)
     env = RogSimSingleAgentEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
@@ -247,4 +240,4 @@ if __name__ == "__main__":
         print("="*100)
         # print(observation.shape)
         # print(k, reward, done)
-    print(np.sum(observation,axis=0))
+    print(np.sum(observation, axis=0))

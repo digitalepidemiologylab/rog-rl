@@ -7,7 +7,3 @@ class AgentState(Enum):
     INFECTIOUS = 1  # O
     RECOVERED = 2  # R
     VACCINATED = 3  # V
-
-
-
-

@@ -1,12 +1,9 @@
-import gym
 from gym import spaces, wrappers
-from gym.utils import seeding
 
 from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-from rog_rl.vaccination_response import VaccinationResponse
 from rog_rl.env import RogSimBaseEnv
 
 
@@ -17,25 +14,24 @@ class ActionType(Enum):
 
 class RogSimEnv(RogSimBaseEnv):
 
-    
     def set_observation_space(self):
         return spaces.Box(
-                                    low=np.float32(0),
-                                    high=np.float32(1),
-                                    shape=(
-                                        self.width,
-                                        self.height,
-                                        len(AgentState)))
+            low=np.float32(0),
+            high=np.float32(1),
+            shape=(
+                self.width,
+                self.height,
+                len(AgentState)))
 
     def set_action_space(self):
         return spaces.MultiDiscrete(
             [
                 len(ActionType), self.width, self.height
-            ])    
-    
+            ])
+
     def set_action_type(self):
         self.action_type = ActionType
-    
+
     def step_action(self, action):
 
         _observation = False
@@ -50,45 +46,45 @@ class RogSimEnv(RogSimBaseEnv):
         action_type = action[0]
         cell_x = action[1]
         cell_y = action[2]
-        
+
         response = "STEP"
-        
+
         if action_type == ActionType.STEP.value:
-            self._model.tick(self.config.get('fast_forward',False))
+            self._model.tick(self.config.get('fast_forward', False))
         elif action_type == ActionType.VACCINATE.value:
             vaccination_success, response = \
                 self._model.vaccinate_cell(cell_x, cell_y)
-                    
+
         _observation = self.get_observation()
         return _observation, response
 
 
 if __name__ == "__main__":
     np.random.seed(0)
-    render = "simple" # "PIL" # "ansi"  # change to "human"
+    render = "simple"  # "PIL" # "ansi"  # change to "human"
     env_config = dict(
-                    width=5,
-                    height=7,
-                    population_density=1.0,
-                    vaccine_density=1.0,
-                    initial_infection_fraction=0.04,
-                    initial_vaccination_fraction=0,
-                    prob_infection=0.2,
-                    prob_agent_movement=0.0,
-                    disease_planner_config={
-                        "incubation_period_mu": 0,
-                        "incubation_period_sigma":  0,
-                        "recovery_period_mu": 20,
-                        "recovery_period_sigma":  0,
-                    },
-                    use_np_model=True,
-                    max_simulation_timesteps=200,
-                    early_stopping_patience=20,
-                    use_renderer=render,
-                    toric=False,
-                    dummy_simulation=False,
-                    debug=True,
-                    seed = 0)
+        width=5,
+        height=7,
+        population_density=1.0,
+        vaccine_density=1.0,
+        initial_infection_fraction=0.04,
+        initial_vaccination_fraction=0,
+        prob_infection=0.2,
+        prob_agent_movement=0.0,
+        disease_planner_config={
+            "incubation_period_mu": 0,
+            "incubation_period_sigma":  0,
+            "recovery_period_mu": 20,
+            "recovery_period_sigma":  0,
+        },
+        use_np_model=True,
+        max_simulation_timesteps=200,
+        early_stopping_patience=20,
+        use_renderer=render,
+        toric=False,
+        dummy_simulation=False,
+        debug=True,
+        seed=0)
     env = RogSimEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
@@ -120,4 +116,4 @@ if __name__ == "__main__":
         k += 1
         # print(observation.shape)
         # print(k, reward, done)
-    print(np.sum(observation,axis=0))
+    print(np.sum(observation, axis=0))

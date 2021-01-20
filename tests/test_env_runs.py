@@ -1,7 +1,5 @@
-import pytest
-from rog_rl.env import AgentState
 from rog_rl.env import ActionType
-from rog_rl.envs.rog_sim_single_agent_env import ActionType as SingleAgentActionType
+import pytest
 import numpy as np
 seed = 1000  # 10000 fails
 
@@ -39,8 +37,6 @@ def test_actions_single_agent_env(single_agent_env):
         observation, reward, done, info = single_agent_env.step(_action)
 
 
-
 if __name__ == "__main__":
-    import pytest
     import sys
     sys.exit(pytest.main(["-v", __file__]))

@@ -311,7 +311,7 @@ class DiseaseSimModel(Model):
                 self.running = False
                 return
 
-    def tick(self, fast_forward = False):
+    def tick(self, fast_forward=False):
         """
         provides option for fast forwarding
         """
@@ -320,7 +320,6 @@ class DiseaseSimModel(Model):
                 self.tick_once()
         else:
             self.tick_once()
-
 
     def tick_once(self):
         """
@@ -349,7 +348,7 @@ class DiseaseSimModel(Model):
             for _target_candidate in target_candidates:
                 if _target_candidate.state == AgentState.SUSCEPTIBLE:
                     was_infection_successful =\
-                         _target_candidate.trigger_infection(
+                        _target_candidate.trigger_infection(
                             prob_infection=self.prob_infection)
                     if was_infection_successful:
                         # Register infection in the contact network

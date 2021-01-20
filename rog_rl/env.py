@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-from rog_rl.vaccination_response import VaccinationResponse
+
 
 class ActionType(Enum):
     STEP = 0
@@ -18,31 +18,31 @@ class RogSimBaseEnv(gym.Env):
     def __init__(self, config={}):
         # Setup Config
         self.default_config = dict(
-                    width=50,
-                    height=50,
-                    population_density=0.75,
-                    vaccine_density=0.05,
-                    initial_infection_fraction=0.1,
-                    initial_vaccination_fraction=0.05,
-                    prob_infection=0.2,
-                    prob_agent_movement=0.0,
-                    disease_planner_config={
-                        "incubation_period_mu": 0,
-                        "incubation_period_sigma": 0,
-                        "recovery_period_mu": 20,
-                        "recovery_period_sigma": 0,
-                    },
-                    only_count_successful_vaccines=False,
-                    vaccine_score_weight=-1,
-                    use_np_model=True,
-                    max_simulation_timesteps=200,
-                    early_stopping_patience=20,
-                    use_renderer=False,  # can be "simple", "ansi"
-                    toric=True,
-                    fast_complete_simulation=True,
-                    fast_forward=False,
-                    dummy_simulation=False,
-                    debug=False)
+            width=50,
+            height=50,
+            population_density=0.75,
+            vaccine_density=0.05,
+            initial_infection_fraction=0.1,
+            initial_vaccination_fraction=0.05,
+            prob_infection=0.2,
+            prob_agent_movement=0.0,
+            disease_planner_config={
+                "incubation_period_mu": 0,
+                "incubation_period_sigma": 0,
+                "recovery_period_mu": 20,
+                "recovery_period_sigma": 0,
+            },
+            only_count_successful_vaccines=False,
+            vaccine_score_weight=-1,
+            use_np_model=True,
+            max_simulation_timesteps=200,
+            early_stopping_patience=20,
+            use_renderer=False,  # can be "simple", "ansi"
+            toric=True,
+            fast_complete_simulation=True,
+            fast_forward=False,
+            dummy_simulation=False,
+            debug=False)
         self.config = {}
         self.config.update(self.default_config)
         self.update_configs(config)
@@ -73,7 +73,8 @@ class RogSimBaseEnv(gym.Env):
         self.last_action = None
         self.last_action_response = None
 
-        assert self.config['use_np_model'], "Non np model is not supported, use use_np_model: True"
+        assert self.config['use_np_model'], "Non np model is not \
+        , use use_np_model: True"
 
         self.renderer = False
 
@@ -82,7 +83,7 @@ class RogSimBaseEnv(gym.Env):
 
         self.cumulative_reward = 0
 
-    def update_configs(self, config = {}):
+    def update_configs(self, config={}):
         self.config.update(config)
 
     def seed(self, seed=None):
@@ -185,26 +186,26 @@ class RogSimBaseEnv(gym.Env):
 
 #         Tick model
         if not self.config["use_np_model"]:
-            self._model.tick(self.config.get('fast_forward',False)) # Not needed for model_np
+            # Not needed for model_np
+            self._model.tick(self.config.get('fast_forward', False))
 
         if self.vaccine_score_weight < 0:
-            self.running_score = self.get_current_game_score(include_vaccine_score=False)
+            self.running_score = self.get_current_game_score(
+                include_vaccine_score=False)
         else:
-            self.running_score = self.get_current_game_score(include_vaccine_score=True)
+            self.running_score = self.get_current_game_score(
+                include_vaccine_score=True)
         self.cumulative_reward = 0
         observation = self.get_observation()
         return observation
-
 
     def env_reset(self):
         # Initialize location of vaccination agent
         pass
 
-
     def get_observation(self):
         obs = self._model.get_observation()
         return self.post_process_observation(obs)
-
 
     def post_process_observation(self, observation):
         return observation
@@ -216,11 +217,11 @@ class RogSimBaseEnv(gym.Env):
 
         if self.use_renderer in ["simple"]:
             self.metadata = {'render.modes': ['simple', 'rgb_array'],
-                    'video.frames_per_second': 5}
+                             'video.frames_per_second': 5}
             from rog_rl.renderer import SimpleRenderer
             self.renderer = SimpleRenderer(
-                    grid_size=(self.width, self.height)
-                )
+                grid_size=(self.width, self.height)
+            )
 
         elif mode in ["human", "rgb_array"]:
             self.metadata = {'render.modes': ['human', 'rgb_array'],
@@ -228,8 +229,8 @@ class RogSimBaseEnv(gym.Env):
             from rog_rl.renderer import Renderer
 
             self.renderer = Renderer(
-                    grid_size=(self.width, self.height)
-                )
+                grid_size=(self.width, self.height)
+            )
         elif mode in ["ansi"]:
             """
             Initialize ANSI Renderer here
@@ -241,7 +242,8 @@ class RogSimBaseEnv(gym.Env):
 
         elif mode in ["PIL"]:
             """
-            Initialize PIL Headless Renderer here for visualising during training
+            Initialize PIL Headless Renderer here
+            for visualising during training
             """
             self.metadata = {'render.modes': ['PIL', 'rgb_array'],
                              'video.frames_per_second': 5}
@@ -249,30 +251,27 @@ class RogSimBaseEnv(gym.Env):
             self.renderer = PILRenderer(grid_size=(self.width, self.height))
 
         else:
-            print("Invalid Mode selected for render:",mode)
+            print("Invalid Mode selected for render:", mode)
 
         self.renderer.setup(mode=mode)
-
 
     def get_agents_by_state(self, state):
         if self.config['use_np_model']:
             obs = self._model.observation
-            states = np.argmax(obs,axis=-1)
-            idx = np.where(states==state.value)
+            states = np.argmax(obs, axis=-1)
+            idx = np.where(states == state.value)
             return [i for i in zip(idx[0], idx[1])]
         else:
             scheduler = self._model.get_scheduler()
             return scheduler.get_agents_by_state(state)
 
-
     def get_agents_grid(self):
         if self.config['use_np_model']:
             obs = self._model.observation
-            return np.argmax(obs,axis=-1)
+            return np.argmax(obs, axis=-1)
         else:
             scheduler = self._model.get_scheduler()
             return scheduler.get_agents_by_state()
-
 
     def get_agent_positions(self, agent):
         if self.config['use_np_model']:
@@ -281,7 +280,6 @@ class RogSimBaseEnv(gym.Env):
         else:
             agent_x, agent_y = agent.pos
             return agent_x, agent_y
-
 
     def update_renderer(self, mode='human'):
         """
@@ -310,8 +308,8 @@ class RogSimBaseEnv(gym.Env):
         _game_steps = _simulation_steps + _vaccines_given
 
         self.renderer.update_stats(
-                    "SCORE",
-                    "{:.3f}".format(self.cumulative_reward))
+            "SCORE",
+            "{:.3f}".format(self.cumulative_reward))
         self.renderer.update_stats("VACCINE_BUDGET", "{}".format(
             model.n_vaccines))
         self.renderer.update_stats("SIMULATION_TICKS", "{}".format(
@@ -319,7 +317,6 @@ class RogSimBaseEnv(gym.Env):
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
 
         self.update_env_renderer_stats()
-
 
         if self.use_renderer == 'simple':
             for key in state_metrics:
@@ -329,7 +326,7 @@ class RogSimBaseEnv(gym.Env):
 
         elif self.use_renderer == 'ansi':
             grid = self.get_agents_grid()
-            render_output = self.renderer.render(self.width,self.height,grid)
+            render_output = self.renderer.render(self.width, self.height, grid)
             if self.debug:
                 print(render_output)
             return render_output
@@ -350,9 +347,9 @@ class RogSimBaseEnv(gym.Env):
                 for _agent in agents:
                     _agent_x, _agent_y = self.get_agent_positions(_agent)
                     self.renderer.draw_cell(
-                                _agent_x, _agent_y,
-                                color
-                            )
+                        _agent_x, _agent_y,
+                        color
+                    )
         if mode in ["human", "rgb_array"]:
             # Update the rest of the renderer
             self.renderer.pre_render()
@@ -366,7 +363,6 @@ class RogSimBaseEnv(gym.Env):
             render_output = self.renderer.post_render(return_rgb_array)
             return render_output
 
-
     def update_env_renderer_stats(self):
         pass
 
@@ -378,10 +374,10 @@ class RogSimBaseEnv(gym.Env):
             (percentage of susceptibles left in the population)
         """
         score = self._model.get_population_fraction_by_state(
-                    AgentState.SUSCEPTIBLE)
+            AgentState.SUSCEPTIBLE)
         if include_vaccine_score:
             score += self._model.get_population_fraction_by_state(
-                        AgentState.VACCINATED)
+                AgentState.VACCINATED)
 
         return score
 
@@ -401,34 +397,38 @@ class RogSimBaseEnv(gym.Env):
             _d[_key] = _value
         # Add "Protected" and "Affected"
         _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
-                                     _d["population.VACCINATED"]
+            _d["population.VACCINATED"]
         _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
         # Add R0 to the game metrics
 #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
 
     def calculate_rewards(self):
-         # Compute difference in game score
+        # Compute difference in game score
         if self.vaccine_score_weight < 0:
-            current_score = self.get_current_game_score(include_vaccine_score=False)
+            current_score = self.get_current_game_score(
+                include_vaccine_score=False)
             _step_reward = current_score - self.running_score
             self.cumulative_reward += _step_reward
             self.running_score = current_score
         else:
-            current_score = self.get_current_game_score(include_vaccine_score=True)
+            current_score = self.get_current_game_score(
+                include_vaccine_score=True)
             _step_reward = current_score - self.running_score
             self.running_score = current_score
             _done = not self._model.is_running()
             if _done:
-                _step_reward = self.terminal_reward(current_score, _step_reward)
+                _step_reward = self.terminal_reward(
+                    current_score, _step_reward)
             self.cumulative_reward += _step_reward
 
         return _step_reward
 
-
     def terminal_reward(self, current_score, _step_reward):
-        susecptible_percentage = self.get_current_game_score(include_vaccine_score=False)
-        _step_reward -= (current_score - susecptible_percentage) * self.vaccine_score_weight
+        susecptible_percentage = self.get_current_game_score(
+            include_vaccine_score=False)
+        _step_reward -= (current_score - susecptible_percentage) * \
+            self.vaccine_score_weight
         return _step_reward
 
     def step_action(self, action):
@@ -438,7 +438,6 @@ class RogSimBaseEnv(gym.Env):
         response = "STEP"
 
         return _observation, response
-
 
     def step(self, action):
         # Handle dummy_simulation Mode
@@ -485,10 +484,6 @@ class RogSimBaseEnv(gym.Env):
 
         return observation, reward, done, info
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
     def render(self, mode='human'):
         """
         This methods provides the option to render the
@@ -515,30 +510,30 @@ class RogSimBaseEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "simple" # "ansi"  # change to "human"
+    render = "simple"  # "ansi"  # change to "human"
     env_config = dict(
-                    width=5,
-                    height=7,
-                    population_density=1.0,
-                    vaccine_density=1.0,
-                    initial_infection_fraction=0.04,
-                    initial_vaccination_fraction=0,
-                    prob_infection=0.2,
-                    prob_agent_movement=0.0,
-                    disease_planner_config={
-                        "incubation_period_mu": 0,
-                        "incubation_period_sigma":  0,
-                        "recovery_period_mu": 20,
-                        "recovery_period_sigma":  0,
-                    },
-                    max_simulation_timesteps=200,
-                    early_stopping_patience=20,
-                    use_renderer=render,
-                    use_model_np=True,
-                    fast_complete_simuation=True,
-                    toric=False,
-                    dummy_simulation=False,
-                    debug=True)
+        width=5,
+        height=7,
+        population_density=1.0,
+        vaccine_density=1.0,
+        initial_infection_fraction=0.04,
+        initial_vaccination_fraction=0,
+        prob_infection=0.2,
+        prob_agent_movement=0.0,
+        disease_planner_config={
+            "incubation_period_mu": 0,
+            "incubation_period_sigma":  0,
+            "recovery_period_mu": 20,
+            "recovery_period_sigma":  0,
+        },
+        max_simulation_timesteps=200,
+        early_stopping_patience=20,
+        use_renderer=render,
+        use_model_np=True,
+        fast_complete_simuation=True,
+        toric=False,
+        dummy_simulation=False,
+        debug=True)
     env = RogSimBaseEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
