@@ -9,6 +9,7 @@ from rog_rl.agent_state import AgentState
 
 
 from PIL import Image, ImageDraw, ImageFont
+import cv2
 
 
 class Renderer:
@@ -715,24 +716,17 @@ class PILRenderer(Renderer):
 
 class SimpleRenderer:
     def __init__(self, grid_size):
-
-        global cv2
-        import cv2
-
+        
         self.width, self.height = grid_size
         self.colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
         minimagesize = 120
         self.render_scale = np.int32(max([1,
-                                          np.ceil(minimagesize //
-                                                  (3*self.width)),
-                                          np.ceil
-                                          (minimagesize//(3*self.height))]))
-        self.scaler = np.ones(
-            (self.render_scale, self.render_scale, 1), np.uint8)
+                                          np.ceil(minimagesize/(3*self.width)),
+                                          np.ceil(minimagesize/(3*self.height))]))
+        self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
 
-        self.text_img = np.zeros(
-            (minimagesize, minimagesize, 3), np.uint8) + 255
-        text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated',
+        self.text_img = np.zeros((minimagesize, minimagesize, 3), np.uint8) + 255
+        text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated', 
                 'Vacs Left', 'Env Steps', 'Sim Ticks']
         self.stat_keys = ['VACCINE_BUDGET', 'GAME_TICKS', 'SIMULATION_TICKS']
         self.font = cv2.FONT_HERSHEY_SIMPLEX

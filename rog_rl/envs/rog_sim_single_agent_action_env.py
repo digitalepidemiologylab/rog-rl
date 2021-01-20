@@ -106,32 +106,32 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
 if __name__ == "__main__":
 
     np.random.seed(100)
-    render = "ansi"  # "ansi"  # change to "human"
+    render = "simple" # "ansi"  # change to "human"
     env_config = dict(
-        width=5,
-        height=5,
-        population_density=1.0,
-        vaccine_density=1.0,
-        initial_infection_fraction=0.04,
-        initial_vaccination_fraction=0,
-        prob_infection=0.2,
-        prob_agent_movement=0.0,
-        disease_planner_config={
-            "incubation_period_mu": 0,
-            "incubation_period_sigma": 0,
-            "recovery_period_mu": 20,
-            "recovery_period_sigma": 0,
-        },
-        vaccine_score_weight=0.5,
-        max_simulation_timesteps=20 * 20 * 10,
-        early_stopping_patience=20,
-        use_renderer=render,  # can be "human", "ansi"
-        use_np_model=True,
-        toric=False,
-        dummy_simulation=False,
-        fast_forward=True,
-        debug=True,
-        seed=0)
+                    width=5,
+                    height=7,
+                    population_density=1.0,
+                    vaccine_density=1.0,
+                    initial_infection_fraction=0.04,
+                    initial_vaccination_fraction=0,
+                    prob_infection=0.2,
+                    prob_agent_movement=0.0,
+                    disease_planner_config={
+                        "incubation_period_mu": 0,
+                        "incubation_period_sigma": 0,
+                        "recovery_period_mu": 20,
+                        "recovery_period_sigma": 0,
+                    },
+                    vaccine_score_weight=0.5,
+                    max_simulation_timesteps=20 * 20 * 10,
+                    early_stopping_patience=20,
+                    use_renderer=render,  # can be "human", "ansi"
+                    use_np_model=True,
+                    toric=False,
+                    dummy_simulation=False,
+                    fast_forward=True,
+                    debug=True,
+                    seed = 0)
     env = RogSimSingleAgentActionEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True

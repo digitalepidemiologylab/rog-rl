@@ -321,7 +321,7 @@ class RogSimBaseEnv(gym.Env):
         if self.use_renderer == 'simple':
             for key in state_metrics:
                 self.renderer.update_stats(key, state_metrics[key])
-            obs = self.get_observation()
+            obs = self._model.get_observation()
             return self.renderer.get_render_output(obs)
 
         elif self.use_renderer == 'ansi':
