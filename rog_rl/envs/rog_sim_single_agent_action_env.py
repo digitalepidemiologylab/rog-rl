@@ -112,7 +112,7 @@ if __name__ == "__main__":
                     width=5,
                     height=7,
                     population_density=1.0,
-                    vaccine_density=1.0,
+                    vaccine_density=0.8,
                     initial_infection_fraction=0.04,
                     initial_vaccination_fraction=0,
                     prob_infection=0.2,

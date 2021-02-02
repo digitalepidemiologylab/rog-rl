@@ -277,6 +277,9 @@ class DiseaseSimModel:
         Finds the final state of the simulation and sets that as the observation
         Also sets self.running to True
         """
+        if not self.running:
+            return
+
         if self.fast_complete_simulation:
             
             obs = self.observation.copy()
