@@ -52,9 +52,9 @@ class DiseaseSimModel:
         self.population_density = population_density
         self.vaccine_density = vaccine_density
 
-        self.n_agents = self.width * self.height
-        self.n_vaccines = int(self.n_agents * self.vaccine_density)
-
+        self.n_gridpoints = self.width * self.height
+        self.n_agents = int(self.n_gridpoints * self.population_density)
+        self.n_vaccines = int(self.n_gridpoints * self.vaccine_density)
 
         self.initial_infection_fraction = initial_infection_fraction
         self.initial_vaccination_fraction = initial_vaccination_fraction
@@ -91,6 +91,14 @@ class DiseaseSimModel:
     
     def initialize_np(self):
         
+        #Initial agent state counts
+        num_empty = self.n_gridpoints - self.n_agents
+        n_infect = int(self.initial_infection_fraction * self.n_gridpoints)
+        n_vaccine_init = int(self.initial_vaccination_fraction * self.n_gridpoints)
+        # Initial infections and initial vaccination adds to more than population density
+        assert num_empty + n_infect + n_vaccine_init <= self.n_gridpoints
+            
+
         # Initialize observation
         self.observation = np.zeros((*self.gridshape, len(AgentState)), np.uint8)
         self.observation[..., AgentState.SUSCEPTIBLE.value] = 1
@@ -115,19 +123,25 @@ class DiseaseSimModel:
                                                  self.incubation_tvals)
         self.transition_map = {AgentState.SUSCEPTIBLE: [AgentState.INFECTIOUS, self.incubation_tvals],
                                 AgentState.INFECTIOUS: [AgentState.RECOVERED, self.recovery_tvals],}
+
+        # Empty cells based on population density
+        no_agent_list = self.rng.choice(np.arange(self.n_gridpoints), size=num_empty, replace=False)
+        no_agent_locs = (no_agent_list // self.height, no_agent_list % self.height)
+        self.no_agent_grid = np.zeros(self.gridshape, dtype=np.bool)
+        self.no_agent_grid[no_agent_locs] = True
+        self.observation[self.no_agent_grid] = 0
+
         # Infect
-        n_infect = int(self.initial_infection_fraction * self.n_agents)
-        infect_list = self.rng.choice(np.arange(self.width * self.height), 
-                                       size=n_infect, replace=False)       
+        agent_list = list(set(np.arange(self.n_gridpoints)) - set(no_agent_list))
+        infect_list = self.rng.choice(agent_list, size=n_infect, replace=False)       
         infect_locs = (infect_list // self.height, infect_list % self.height)
         self.infection_scheduled_grid[infect_locs] = True
         self.infection_base_time_grid[infect_locs] = self.schedule_steps
         self.observation[self.infection_scheduled_grid] = 0
         self.observation[self.infection_scheduled_grid, AgentState.INFECTIOUS.value] = 1
                              
-        # Initial vaccinate  - Skipped for now - Ignore locations infected and vaccinate in similar manner
-        n_vaccine_init = int(self.initial_vaccination_fraction * self.n_agents)
-        not_infected = list(set(np.arange(self.height * self.height)) - set(infect_list))
+        # Initial vaccinate
+        not_infected = list(set(agent_list) - set(infect_list))
         vaccinate_list = self.rng.choice(not_infected, size=n_vaccine_init, replace=False)
         vaccinate_locs = (vaccinate_list // self.height, vaccinate_list % self.height)
         vaccinate_mask = np.zeros(self.gridshape, dtype=np.bool)
@@ -160,7 +174,7 @@ class DiseaseSimModel:
     ###########################################################################
 
     def get_observation(self):
-        assert  np.all(self.observation.sum(axis=-1) == 1)
+        assert  np.all( (self.observation.sum(axis=-1) + self.no_agent_grid) == 1)
         # Assertion disabled for perf reasons
         return self.observation
 
@@ -212,8 +226,10 @@ class DiseaseSimModel:
         success = False
 
         agent_state = np.argmax(self.observation[cell_x, cell_y])
-        if agent_state == AgentState.SUSCEPTIBLE.value:
-            # Case 2 : Agent is susceptible, and can be vaccinated
+        if self.no_agent_grid[cell_x, cell_y]:
+            response = VaccinationResponse.NO_AGENT
+        elif agent_state == AgentState.SUSCEPTIBLE.value:
+            # Agent is susceptible, and can be vaccinated
             if self.only_count_successful_vaccines:
                 self.n_vaccines -= 1
                 

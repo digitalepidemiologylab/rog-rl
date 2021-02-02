@@ -111,7 +111,7 @@ if __name__ == "__main__":
     env_config = dict(
                     width=5,
                     height=7,
-                    population_density=1.0,
+                    population_density=0.7,
                     vaccine_density=0.8,
                     initial_infection_fraction=0.04,
                     initial_vaccination_fraction=0,
@@ -158,4 +158,4 @@ if __name__ == "__main__":
         print("="*100)
         # print(observation.shape)
         # print(k, reward, done)
-    print(np.sum(observation,axis=0))
+    print(np.sum(observation,axis=-1))
