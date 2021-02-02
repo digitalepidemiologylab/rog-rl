@@ -21,7 +21,7 @@ def test_env_reproducable(all_envs):
             _action = env.action_space.sample()
             observation, reward, done, info = env.step(_action)
             k += 1
-        final_obs = np.sum(observation, axis = 0)
+        final_obs = np.sum(observation, axis=0)
 
         env.seed(1)
         observation = env.reset()
@@ -33,10 +33,9 @@ def test_env_reproducable(all_envs):
             observation, reward, done, info = env.step(_action)
             k += 1
 
-        assert np.sum(final_obs - np.sum(observation, axis = 0)) == 0
+        assert np.sum(final_obs - np.sum(observation, axis=0)) == 0
 
 
 if __name__ == "__main__":
-    import pytest
     import sys
     sys.exit(pytest.main(["-v", __file__]))

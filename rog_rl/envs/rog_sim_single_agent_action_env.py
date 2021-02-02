@@ -1,18 +1,17 @@
-import gym
 from gym import spaces, wrappers
-from gym.utils import seeding
 
 from enum import Enum
 import numpy as np
 
 
-from rog_rl.agent_state import AgentState
 from rog_rl.vaccination_response import VaccinationResponse
 from rog_rl import RogSimSingleAgentEnv
+
 
 class ActionType(Enum):
     MOVE = 0
     VACCINATE = 1
+
 
 class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
     """
@@ -40,7 +39,7 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
 
     def set_action_space(self):
         """
-        The action space is composed of 5 discrete actions :
+        The action space is composed of 2 discrete actions :
 
         MOVE : Moves the vaccination-agent in fixed order
 
@@ -51,36 +50,36 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
         )
 
     def set_action_type(self):
-        self.action_type = ActionType    
-    
+        self.action_type = ActionType
+
     def move_action(self):
         if self.vacc_agent_x == self.width - 1:
             if self.vacc_agent_y == self.height - 1:
                 # Navigation Complete - Move to next time step
-                self._model.tick(self.config.get('fast_forward',False))
+                self._model.tick(self.config.get('fast_forward', False))
                 self.agent_reset()
             else:
                 self.vacc_agent_y += 1
                 self.vacc_agent_y %= self.height
                 self.vacc_agent_x += 1
-                self.vacc_agent_x %= self.width                    
+                self.vacc_agent_x %= self.width
         else:
             self.vacc_agent_x += 1
-            self.vacc_agent_x %= self.width    
-    
+            self.vacc_agent_x %= self.width
+
     def step_action(self, action):
 
         _observation = False
 
         response = "MOVE"
-      
+
         if action == ActionType.MOVE.value:
             """
             Handle moving to next cell action
             """
             _observation = self._model.get_observation()
             self.move_action()
-        
+
         elif action == ActionType.VACCINATE.value:
             """
             Handle VACCINATE action
@@ -111,8 +110,8 @@ if __name__ == "__main__":
     env_config = dict(
                     width=5,
                     height=7,
-                    population_density=0.7,
-                    vaccine_density=0.8,
+                    population_density=1.0,
+                    vaccine_density=1.0,
                     initial_infection_fraction=0.04,
                     initial_vaccination_fraction=0,
                     prob_infection=0.2,
@@ -158,4 +157,4 @@ if __name__ == "__main__":
         print("="*100)
         # print(observation.shape)
         # print(k, reward, done)
-    print(np.sum(observation,axis=-1))
+    print(np.sum(observation, axis=0))
