@@ -56,7 +56,7 @@ class RogSimSingleAgentActionEnv(RogSimSingleAgentEnv):
         if self.vacc_agent_x == self.width - 1:
             if self.vacc_agent_y == self.height - 1:
                 # Navigation Complete - Move to next time step
-                self._model.tick(self.config.get('fast_forward', False))
+                self._model.run_simulation_to_end()
                 self.agent_reset()
             else:
                 self.vacc_agent_y += 1
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     while not done:
         env.action_space.seed(k)
         _action = env.action_space.sample()
-        print("Action : ", _action)
+        print("Action : ", _action, "     Step:", k)
         observation, reward, done, info = env.step(_action)
         print(observation.shape)
 

@@ -50,7 +50,7 @@ class RogSimEnv(RogSimBaseEnv):
         response = "STEP"
 
         if action_type == ActionType.STEP.value:
-            self._model.tick(self.config.get('fast_forward', False))
+            self._model.tick()
         elif action_type == ActionType.VACCINATE.value:
             vaccination_success, response = \
                 self._model.vaccinate_cell(cell_x, cell_y)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         #     assert _action[0] in [0, 1]
         #     assert _action[1] in list(range(env._model.width))
         #     assert _action[2] in list(range(env._model.height))
-        print("Action : ", _action)
+        print("Action : ", _action, "     Step:", k)
         observation, reward, done, info = env.step(_action)
         if not record:
             env.render(mode=render)

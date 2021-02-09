@@ -125,6 +125,7 @@ class RogSimBaseEnv(gym.Env):
         # Delete Model if already exists
         if self._model:
             del self._model
+        
 
         if self.dummy_simulation:
             """
@@ -133,6 +134,7 @@ class RogSimBaseEnv(gym.Env):
             """
             return self.observation_space.sample()
 
+        self._step_count = 0 
         width = self.config['width']
         height = self.config['height']
         population_density = self.config['population_density']
@@ -181,8 +183,10 @@ class RogSimBaseEnv(gym.Env):
         # - max_simulation_timesteps
         # - Number of Vaccines available
 
-        self._max_episode_steps = self.config['max_simulation_timesteps'] + \
-            self._model.n_vaccines
+        self._max_episode_steps = self.config.get('max_episode_steps', None)
+        if self._max_episode_steps is None:
+            self._max_episode_steps = self.config['max_simulation_timesteps'] + \
+                                        self._model.n_vaccines
 
 #         Tick model
         if not self.config["use_np_model"]:
@@ -453,6 +457,10 @@ class RogSimBaseEnv(gym.Env):
         _info = {}
 
         _observation, response = self.step_action(action)
+        if self._step_count >= self._max_episode_steps:
+            self._model.run_simulation_to_end()
+            _observation = self._model.get_observation()
+        self._step_count += 1
 
         self.last_action = action
         self.last_action_response = response

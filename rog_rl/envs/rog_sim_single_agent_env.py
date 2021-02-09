@@ -119,7 +119,10 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
             Handle SIM_TICK action
             """
             # Handle action propagation in real simulator
-            self._model.tick(self.config.get('fast_forward', False))
+            if self.config.get('simulation_single_tick', False):
+                self._model.tick()
+            else:
+                self._model.run_simulation_to_end()
             _observation = self._model.get_observation()
             response = "STEP"
         elif action == ActionType.VACCINATE.value:
@@ -136,9 +139,8 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
             # Force Run simulation to completion if
             # run out of vaccines
             if response == VaccinationResponse.AGENT_VACCINES_EXHAUSTED:
-                while self._model.is_running():
-                    self._model.tick()
-                    _observation = self._model.get_observation()
+                self._model.run_simulation_to_end()
+                _observation = self._model.get_observation()
 
         elif action == ActionType.MOVE_N.value:
             """
@@ -229,7 +231,7 @@ if __name__ == "__main__":
         env.action_space.seed(k)
         _action = env.action_space.sample()
 
-        print("Action : ", _action)
+        print("Action : ", _action, "     Step:", k)
         observation, reward, done, info = env.step(_action)
         print(observation.shape)
 
