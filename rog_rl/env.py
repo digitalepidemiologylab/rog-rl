@@ -437,10 +437,12 @@ class RogSimBaseEnv(gym.Env):
         ring_vaccination = convolve2d(self.initial_infection_channel, 
                                       k, 'same',
                                       boundary=self._model.boundary) > 0
+        agent_present = np.bitwise_not(self._model.no_agent_grid)
+        n_agents = self._model.n_agents
+        ring_vaccination = np.bitwise_and(ring_vaccination, agent_present)
         min_vaccines_needed = np.sum(ring_vaccination) - n_infected
-        gridpoints = self.width * self.height
-        max_susceptible_possible = gridpoints - np.sum(ring_vaccination)
-        max_vaccines_possible = gridpoints - n_infected
+        max_susceptible_possible = n_agents - np.sum(ring_vaccination)
+        max_vaccines_possible = n_agents - n_infected
         vaccines_used = self.n_initial_vaccines - max(0, self._model.n_vaccines)
         if min_vaccines_needed < max_vaccines_possible:
             _d['normalized_vaccine_wastage'] = (vaccines_used - min_vaccines_needed) / (max_vaccines_possible - min_vaccines_needed)
@@ -448,10 +450,10 @@ class RogSimBaseEnv(gym.Env):
             # Weird edge case where everyone needs to be vaccinated
             _d['normalized_vaccine_wastage'] = float(vaccines_used == min_vaccines_needed) - 1.0
         if max_susceptible_possible > 0:
-            _d['normalized_susceptible'] = stats["population.SUSCEPTIBLE"] * gridpoints / max_susceptible_possible
+            _d['normalized_susceptible'] = stats["population.SUSCEPTIBLE"] * n_agents / max_susceptible_possible
         else:
             _d['normalized_susceptible'] = 1.
-        _d['normalized_protected'] = protected / ( 1 - n_infected/gridpoints )
+        _d['normalized_protected'] = protected / ( 1 - n_infected/n_agents )
 
         return _d
 
