@@ -6,6 +6,7 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
+from scipy.signal import convolve2d
 
 
 class ActionType(Enum):
@@ -191,7 +192,7 @@ class RogSimBaseEnv(gym.Env):
 #         Tick model
         if not self.config["use_np_model"]:
             # Not needed for model_np
-            self._model.tick(self.config.get('fast_forward', False))
+            self._model.tick()
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(
@@ -201,6 +202,12 @@ class RogSimBaseEnv(gym.Env):
                 include_vaccine_score=True)
         self.cumulative_reward = 0
         observation = self.get_observation()
+
+        # Used for extra metrics
+        self.initial_infection_channel = self._model.infection_scheduled_grid.copy()
+        self.n_initial_vaccines = self._model.n_vaccines
+
+
         return observation
 
     def env_reset(self):
@@ -406,6 +413,47 @@ class RogSimBaseEnv(gym.Env):
         # Add R0 to the game metrics
 #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
+    
+    def get_end_of_simulation_metrics(self, dummy_simulation=False):
+        """
+        Returns a dictionary of metrics that should only be calculated at end of simuation
+        """
+        if dummy_simulation:
+            return {}
+
+        stats = {}
+        # current population fraction of different states
+        for _state in AgentState:
+            _value = self._model.get_population_fraction_by_state(_state)
+            _key = "population.{}".format(_state.name)
+            stats[_key] = _value
+        
+        protected = stats["population.SUSCEPTIBLE"] + stats["population.VACCINATED"]
+        
+        _d = {}
+        n_infected = np.sum(self.initial_infection_channel)
+        k = np.ones((3,3))
+        # This will include vaccination and infeted
+        ring_vaccination = convolve2d(self.initial_infection_channel, 
+                                      k, 'same',
+                                      boundary=self._model.boundary) > 0
+        min_vaccines_needed = np.sum(ring_vaccination) - n_infected
+        gridpoints = self.width * self.height
+        max_susceptible_possible = gridpoints - np.sum(ring_vaccination)
+        max_vaccines_possible = gridpoints - n_infected
+        vaccines_used = self.n_initial_vaccines - max(0, self._model.n_vaccines)
+        if min_vaccines_needed < max_vaccines_possible:
+            _d['normalized_vaccine_wastage'] = (vaccines_used - min_vaccines_needed) / (max_vaccines_possible - min_vaccines_needed)
+        else:
+            # Weird edge case where everyone needs to be vaccinated
+            _d['normalized_vaccine_wastage'] = float(vaccines_used == min_vaccines_needed) - 1.0
+        if max_susceptible_possible > 0:
+            _d['normalized_susceptible'] = stats["population.SUSCEPTIBLE"] * gridpoints / max_susceptible_possible
+        else:
+            _d['normalized_susceptible'] = 1.
+        _d['normalized_protected'] = protected / ( 1 - n_infected/gridpoints )
+
+        return _d
 
     def calculate_rewards(self):
         # Compute difference in game score
@@ -474,6 +522,10 @@ class RogSimBaseEnv(gym.Env):
 
         _info['cumulative_reward'] = self.cumulative_reward
         _done = not self._model.is_running()
+        if _done:
+            end_sim_metrics = self.get_end_of_simulation_metrics()
+            for _key in end_sim_metrics.keys():
+                _info[_key] = end_sim_metrics[_key]
 
         _observation = self.post_process_observation(_observation)
         return _observation, _step_reward, _done, _info
@@ -518,7 +570,7 @@ class RogSimBaseEnv(gym.Env):
 
 if __name__ == "__main__":
 
-    render = "simple"  # "ansi"  # change to "human"
+    render = "ansi"  # "ansi"  # change to "human"
     env_config = dict(
         width=5,
         height=7,
@@ -544,7 +596,7 @@ if __name__ == "__main__":
         debug=True)
     env = RogSimBaseEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
-    record = True
+    record = False
     if record:
         # records the the rendering in the `recording` folder
         env = wrappers.Monitor(env, "recording", force=True)
@@ -570,7 +622,7 @@ if __name__ == "__main__":
         if not record:
             env.render(mode=render)
         k += 1
-
+    print(info)
         # print(observation.shape)
         # print(k, reward, done)
     # print(observation.shape())

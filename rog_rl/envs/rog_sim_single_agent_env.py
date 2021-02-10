@@ -180,7 +180,7 @@ class RogSimSingleAgentEnv(RogSimBaseEnv):
 if __name__ == "__main__":
 
     np.random.seed(100)
-    render = "simple"  # "ansi"  # change to "human"
+    render = "ansi"  # "ansi"  # change to "human"
     env_config = dict(
         width=5,
         height=7,
@@ -243,3 +243,5 @@ if __name__ == "__main__":
         # print(observation.shape)
         # print(k, reward, done)
     print(np.sum(observation, axis=0))
+    print(info)
+

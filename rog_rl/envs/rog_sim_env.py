@@ -61,9 +61,9 @@ class RogSimEnv(RogSimBaseEnv):
 
 if __name__ == "__main__":
     np.random.seed(0)
-    render = "simple"  # "PIL" # "ansi"  # change to "human"
+    render = "ansi"  # "PIL" # "ansi"  # change to "human"
     env_config = dict(
-        width=5,
+        width=8,
         height=7,
         population_density=1.0,
         vaccine_density=1.0,
@@ -117,3 +117,5 @@ if __name__ == "__main__":
         # print(observation.shape)
         # print(k, reward, done)
     print(np.sum(observation, axis=0))
+    print(info)
+
