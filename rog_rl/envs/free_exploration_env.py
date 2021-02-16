@@ -5,7 +5,7 @@ import numpy as np
 
 
 from rog_rl.vaccination_response import VaccinationResponse
-from rog_rl.env import RogSimBaseEnv
+from rog_rl.env import RogRLEnv
 
 
 class ActionType(Enum):
@@ -17,7 +17,7 @@ class ActionType(Enum):
     SIM_TICK = 5
 
 
-class RogSimSingleAgentEnv(RogSimBaseEnv):
+class FreeExplorationEnv(RogRLEnv):
     """
     A single agent env contains a single
     vaccination agent which can move around the grid
@@ -205,7 +205,7 @@ if __name__ == "__main__":
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimSingleAgentEnv(config=env_config)
+    env = FreeExplorationEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:
@@ -244,4 +244,3 @@ if __name__ == "__main__":
         # print(k, reward, done)
     print(np.sum(observation, axis=0))
     print(info)
-

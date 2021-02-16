@@ -4,12 +4,12 @@ import gym
 from gym import wrappers
 from gym import Wrapper
 import numpy as np
-from rog_rl import RogSimSingleAgentActionEnv  # noqa
+from rog_rl import FixedOrderExplorationEnv  # noqa
 
 
-class RogSimState(Wrapper):
+class RogRLStateEnv(Wrapper):
 
-    def __init__(self, config={}, name="RogRL-v0"):
+    def __init__(self, config={}, name="BaseGridRogRLEnv-v0"):
         # super().__init__(config)
         self.env = gym.make(name, config=config)
         if hasattr(self.env, '_model'):
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimState(config=env_config, name="RogRLSingleAgent-v0")
+    env = RogRLStateEnv(config=env_config, name="FreeExplorationEnv-v0")
     print("USE RENDERER ?", env.env.use_renderer)
     record = False
     if record:

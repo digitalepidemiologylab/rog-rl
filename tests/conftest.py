@@ -1,6 +1,6 @@
 import pytest
-from rog_rl import RogSimEnv  # noqa
-from rog_rl import RogSimSingleAgentEnv  # noqa
+from rog_rl import BaseGridRogRLEnv  # noqa
+from rog_rl import FreeExplorationEnv  # noqa
 from click.testing import CliRunner
 
 
@@ -38,7 +38,7 @@ def all_mesa_envs():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env_mesa = RogSimEnv(config=env_config)
+    env_mesa = BaseGridRogRLEnv(config=env_config)
 
     render = "simple"  # "ansi"  # change to "PIL"
     env_config = dict(
@@ -67,8 +67,8 @@ def all_mesa_envs():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    single_agent_env_mesa = RogSimSingleAgentEnv(config=env_config)
-    return [env_mesa, single_agent_env_mesa]
+    free_exploration_env_mesa = FreeExplorationEnv(config=env_config)
+    return [env_mesa, free_exploration_env_mesa]
 
 
 @pytest.fixture(scope="module")
@@ -99,7 +99,7 @@ def all_envs():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimEnv(config=env_config)
+    env = BaseGridRogRLEnv(config=env_config)
 
     render = "simple"  # "ansi"  # change to "PIL"
     env_config = dict(
@@ -128,8 +128,8 @@ def all_envs():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    single_agent_env = RogSimSingleAgentEnv(config=env_config)
-    return [env, single_agent_env]
+    free_exploration_env = FreeExplorationEnv(config=env_config)
+    return [env, free_exploration_env]
 
 
 @pytest.fixture(scope="module")
@@ -160,12 +160,12 @@ def env():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimEnv(config=env_config)
+    env = BaseGridRogRLEnv(config=env_config)
     return env
 
 
 @pytest.fixture(scope="module")
-def single_agent_env():
+def free_exploration_env():
     render = "simple"  # "ansi"  # change to "PIL"
     env_config = dict(
         width=5,
@@ -193,10 +193,11 @@ def single_agent_env():
         dummy_simulation=False,
         debug=True,
         seed=0)
-    single_agent_env = RogSimSingleAgentEnv(config=env_config)
-    return single_agent_env
+    free_exploration_env = FreeExplorationEnv(config=env_config)
+    return free_exploration_env
 
 
 @pytest.fixture(scope="module")
 def names():
-    return ['RogRL-v0', 'RogRLSingleAgent-v0']
+    return ['BaseGridRogRLEnv-v0', 'FreeExplorationEnv-v0']
+

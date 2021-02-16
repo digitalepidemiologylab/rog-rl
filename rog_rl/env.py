@@ -14,7 +14,7 @@ class ActionType(Enum):
     VACCINATE = 1
 
 
-class RogSimBaseEnv(gym.Env):
+class RogRLEnv(gym.Env):
 
     def __init__(self, config={}):
         # Setup Config
@@ -596,7 +596,7 @@ if __name__ == "__main__":
         toric=False,
         dummy_simulation=False,
         debug=True)
-    env = RogSimBaseEnv(config=env_config)
+    env = RogRLEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = False
     if record:

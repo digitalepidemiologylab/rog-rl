@@ -22,9 +22,9 @@ and if everything went well, ideally you should see something along the lines of
 ```python
 #! /usr/bin/env python
 
-from rog_rl import RogSimEnv
+from rog_rl import BaseGridRogRLEnv
 
-env = RogSimEnv()
+env = BaseGridRogRLEnv()
 
 observation = env.reset()
 done = False
@@ -36,7 +36,7 @@ while not done:
 
 ```python
 
-from rog_rl import RogSimEnv
+from rog_rl import BaseGridRogRLEnv
 render = "simple"
 env_config = dict(
                 width=10,
@@ -47,7 +47,7 @@ env_config = dict(
                 use_renderer=render,
                 debug=True)
 
-env = RogSimEnv(env_config)
+env = BaseGridRogRLEnv(env_config)
 
 observation = env.reset()
 done = False
@@ -128,7 +128,7 @@ Action space is MultiDiscrete action space of size 3,
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimEnv(config=env_config)
+    env = BaseGridRogRLEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:
@@ -151,7 +151,7 @@ Action space is MultiDiscrete action space of size 3,
         k += 1
 ```
 
-### Rog-RL Single Agent
+### Rog-RL Free Exploration Environment
 
 A 2-D grid world simulation of a disease simulation model where there is only one agent that moves around the grid world and vaccinates the cells and once done, it can choose to tick.
 The task is to move around and vaccinate the correct susceptible cells and once done tick to the next simulation time step.
@@ -173,7 +173,7 @@ Action can be of the following types
 
 
 ```python
-    from rog_rl import RogSimSingleAgentEnv
+    from rog_rl import FreeExplorationEnv
     render = "simple"  # "ansi"  # change to "human"
     env_config = dict(
         width=5,
@@ -199,7 +199,7 @@ Action can be of the following types
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimSingleAgentEnv(config=env_config)
+    env = FreeExplorationEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:
@@ -234,9 +234,9 @@ Action can be of the following types
         print("="*100)
 ```
 
-### Rog-RL Single Agent Action
+### Rog-RL Fixed Order Exploration Environment
 
-A 2-D grid world simulation of a disease simulation model which is derived from the [single agent environment](#rog-rl-single-agent) where there is only one agent that moves around the grid world and vaccinates the cells and once done, it can choose to tick. The difference is that the order of movement is fixed and the only action to be taken is to
+A 2-D grid world simulation of a disease simulation model which is derived from the [free exploration environment](#free-exploration-env) where there is only one agent that moves around the grid world and vaccinates the cells and once done, it can choose to tick. The difference is that the order of movement is fixed and the only action to be taken is to
 
 - move to the next cell or
 - vaccinate current cell and move to the next cell
@@ -256,7 +256,7 @@ Action can be of the following types
 
 
 ```python
-    from rog_rl import RogSimSingleAgentActionEnv
+    from rog_rl import FixedOrderExplorationEnv
     render = "simple"  # "ansi"
     env_config = dict(
         width=5,
@@ -282,7 +282,7 @@ Action can be of the following types
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimSingleAgentActionEnv(config=env_config)
+    env = FixedOrderExplorationEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:
@@ -317,7 +317,7 @@ Action can be of the following types
 Wrapper around an existing rog sim environment specified by adding the name argument as follows
 
 ```console
-env = RogSimState(config=env_config, name="RogRLSingleAgent-v0")
+env = RogRLStateEnv(config=env_config, name="FreeExplorationEnv-v0")
 ```
 
 The wrapper provides additional methods for saving and reverting to states as shown below
@@ -348,7 +348,7 @@ The wrapper provides additional methods for saving and reverting to states as sh
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimState(config=env_config, name="RogRLSingleAgent-v0")
+    env = RogRLStateEnv(config=env_config, name="FreeExplorationEnv-v0")
     print("USE RENDERER ?", env.env.use_renderer)
     record = False
     if record:
@@ -380,7 +380,7 @@ The wrapper provides additional methods for saving and reverting to states as sh
 
 ## Available Configurations
 
-You can instantiate a RogSim environment with the following configuration options
+You can instantiate a RogRL environment with the following configuration options
 
 ```python
 

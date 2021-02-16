@@ -26,15 +26,15 @@ def test_actions_env(env):
         observation, reward, done, info = env.step(_action)
 
 
-def test_actions_single_agent_env(single_agent_env):
+def test_actions_free_exploration_env(free_exploration_env):
     np.random.seed(seed)
-    observation = single_agent_env.reset()
-    _action = single_agent_env.action_space.sample()
+    observation = free_exploration_env.reset()
+    _action = free_exploration_env.action_space.sample()
     n_action_types = len(ActionType)
     for i in range(n_action_types):
         _action = i
         print("Action : ", _action)
-        observation, reward, done, info = single_agent_env.step(_action)
+        observation, reward, done, info = free_exploration_env.step(_action)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from rog_rl import RogSimEnv  # noqa
-from rog_rl import RogSimSingleAgentEnv  # noqa
+from rog_rl import BaseGridRogRLEnv  # noqa
+from rog_rl import FreeExplorationEnv  # noqa
 from rog_rl.env import ActionType
 
 from gym import wrappers
@@ -9,8 +9,8 @@ import numpy as np
 
 """Tests for `rogi_rl` gym based env."""
 
-names = ['RogRL-v0', 'RogRLSingleAgent-v0',
-         'RogRLSingleAgentAction-v0', 'RogRLState-v0']
+names = ['BaseGridRogRLEnv-v0', 'FreeExplorationEnv-v0',
+         'FixedOrderExplorationEnv-v0', 'RogRLStateEnv-v0']
 
 
 @pytest.mark.parametrize('name, width, height, toric, dummy_simulation, \

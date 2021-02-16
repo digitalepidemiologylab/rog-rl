@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 
 from rog_rl.agent_state import AgentState
-from rog_rl.env import RogSimBaseEnv
+from rog_rl.env import RogRLEnv
 
 
 class ActionType(Enum):
@@ -12,7 +12,7 @@ class ActionType(Enum):
     VACCINATE = 1
 
 
-class RogSimEnv(RogSimBaseEnv):
+class BaseGridRogRLEnv(RogRLEnv):
 
     def set_observation_space(self):
         return spaces.Box(
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         dummy_simulation=False,
         debug=True,
         seed=0)
-    env = RogSimEnv(config=env_config)
+    env = BaseGridRogRLEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
     if record:
@@ -118,4 +118,3 @@ if __name__ == "__main__":
         # print(k, reward, done)
     print(np.sum(observation, axis=0))
     print(info)
-
