@@ -19,8 +19,8 @@ def demo(width, height):  # pragma: no cover
     from rog_rl import BaseGridRogRLEnv
     render = "ansi"
     env = BaseGridRogRLEnv({"debug": True, "width": width, "height": height,
-                     "use_np_model": True,
-                     "use_renderer": render})
+                            "use_np_model": True,
+                            "use_renderer": render})
 
     observation = env.reset()
     done = False

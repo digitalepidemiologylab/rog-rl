@@ -236,7 +236,7 @@ class Renderer:
         _text_string = "Step Reward"
         _text_string += ":"
         _text_string += str(self.stats['SCORE'])
-        _font_size = int(self.AGENT_STATUS_FONT_SIZE+2)
+        _font_size = int(self.AGENT_STATUS_FONT_SIZE + 2)
         _x = self.MARGIN
         _y = self.HEIGHT - self.MARGIN - self.AGENT_STATUS_FONT_SIZE
         dict_texts[_text_string] = self.pyglet.text.Label(
@@ -312,7 +312,7 @@ class Renderer:
         polygon = self.rendering.FilledPolygon([
             start_coord,
             (start_coord[0] + self.CELL_WIDTH, start_coord[1]),
-            (start_coord[0] + self.CELL_WIDTH//2,
+            (start_coord[0] + self.CELL_WIDTH // 2,
              start_coord[1] + self.CELL_HEIGHT)
         ])
         polygon.set_color(*self.convert_gym_color(color))
@@ -495,7 +495,7 @@ class ANSIRenderer:
         """
 
         render_string = ""
-        render_string += "╔"+"═══"*(width+1) + "╗\n"
+        render_string += "╔" + "═══" * (width + 1) + "╗\n"
         render_string += "║  |{}|║\n".format(
             "|".join([str(x).zfill(2) for x in range(width)])
         )
@@ -517,7 +517,7 @@ class ANSIRenderer:
 
                 render_string += self._get_cell_string(_state, _char=_char)
             render_string += "║\n"
-        render_string += "╚"+"═══"*(width+1) + "╝"
+        render_string += "╚" + "═══" * (width + 1) + "╝"
         return render_string
 
     def clear_screen(self):
@@ -679,7 +679,7 @@ class PILRenderer(Renderer):
         _text_string = "Step Reward"
         _text_string += ":"
         _text_string += str(self.stats['SCORE'])
-        _font_size = int(self.AGENT_STATUS_FONT_SIZE+2)
+        _font_size = int(self.AGENT_STATUS_FONT_SIZE + 2)
         _x = self.MARGIN
         _y = self.HEIGHT - self.MARGIN - self.AGENT_STATUS_FONT_SIZE
         dict_texts[_text_string] = self.add_text(
@@ -716,17 +716,17 @@ class PILRenderer(Renderer):
 
 class SimpleRenderer:
     def __init__(self, grid_size):
-        
+
         self.width, self.height = grid_size
         self.colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
         minimagesize = 120
         self.render_scale = np.int32(max([1,
-                                          np.ceil(minimagesize/(3*self.width)),
-                                          np.ceil(minimagesize/(3*self.height))]))
+                                          np.ceil(minimagesize / (3 * self.width)),
+                                          np.ceil(minimagesize / (3 * self.height))]))
         self.scaler = np.ones((self.render_scale, self.render_scale, 1), np.uint8)
 
         self.text_img = np.zeros((minimagesize, minimagesize, 3), np.uint8) + 255
-        text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated', 
+        text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated',
                 'Vacs Left', 'Env Steps', 'Sim Ticks']
         self.stat_keys = ['VACCINE_BUDGET', 'GAME_TICKS', 'SIMULATION_TICKS']
         self.font = cv2.FONT_HERSHEY_SIMPLEX
@@ -735,7 +735,7 @@ class SimpleRenderer:
         self.lineType = 1
 
         for i, txt in enumerate(text):
-            org = (5, (i+1)*15)
+            org = (5, (i + 1) * 15)
             cv2.putText(self.text_img, txt, org,
                         self.font, self.fontScale,
                         self.fontColor, self.lineType)
@@ -776,7 +776,7 @@ class SimpleRenderer:
             arr[va_r: va_r + k, va_c: va_c + k] = 0
 
         # Puts value in spaced grid
-        arr[k//2::k, k//2::k] = state2col
+        arr[k // 2::k, k // 2::k] = state2col
 
         # Upsamples the image
         scaled_viz = np.kron(arr, self.scaler)
@@ -794,7 +794,7 @@ class SimpleRenderer:
             stat_text.append('%05d' % int(value))
 
         for i, txt in enumerate(stat_text):
-            org = (75, (i+1)*15)
+            org = (75, (i + 1) * 15)
             cv2.putText(text_img, txt, org,
                         self.font, self.fontScale,
                         self.fontColor, self.lineType)

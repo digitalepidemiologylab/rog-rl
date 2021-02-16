@@ -239,7 +239,7 @@ if __name__ == "__main__":
             env.render(mode=render)
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
-        print("="*100)
+        print("=" * 100)
         # print(observation.shape)
         # print(k, reward, done)
     print(np.sum(observation, axis=0))

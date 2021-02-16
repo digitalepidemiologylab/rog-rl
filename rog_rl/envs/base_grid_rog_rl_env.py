@@ -73,9 +73,9 @@ if __name__ == "__main__":
         prob_agent_movement=0.0,
         disease_planner_config={
             "incubation_period_mu": 0,
-            "incubation_period_sigma":  0,
+            "incubation_period_sigma": 0,
             "recovery_period_mu": 20,
-            "recovery_period_sigma":  0,
+            "recovery_period_sigma": 0,
         },
         use_np_model=True,
         max_simulation_timesteps=200,

@@ -108,7 +108,7 @@ if __name__ == "__main__":
         if not record:
             env.render(mode=render)
         k += 1
-        print("="*100)
+        print("=" * 100)
         if k == 3:
             # save state
             states = env.get_state()

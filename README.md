@@ -85,7 +85,7 @@ The environment completes when one of the conditions are fulfilled and the envir
 
 We provide multiple sets of similar grid based environment with different problem formulations
 
-### Rog-RL Multi-Agent
+### Rog-RL Base Grid Environment
 
 A 2-D grid world simulation of a disease simulation model where each x,y co-ordinate is a cell which can be empty or have an agent belonging to one of the agent states (Susceptible, Infectious, Recovered/Dead, Vaccinated). The task is to vaccinate the correct cells and once done tick to the next simulation time step.
 
@@ -424,7 +424,7 @@ When you're done making changes, check that your changes pass flake8 and the
 tests::
 
 ```console
-flake8 rog-rl tests
+flake8 rog_rl tests
 pytest --cov rog_rl
 ```
 

@@ -37,12 +37,12 @@ class DiseaseSimModel(Model):
         prob_infection=0.2,
         prob_agent_movement=0.0,
         disease_planner_config={
-            "latent_period_mu":  2 * 4,
-            "latent_period_sigma":  0,
-            "incubation_period_mu":  5 * 4,
-            "incubation_period_sigma":  0,
-            "recovery_period_mu":  14 * 4,
-            "recovery_period_sigma":  0,
+            "latent_period_mu": 2 * 4,
+            "latent_period_sigma": 0,
+            "incubation_period_mu": 5 * 4,
+            "incubation_period_sigma": 0,
+            "recovery_period_mu": 14 * 4,
+            "recovery_period_sigma": 0,
         },
         max_timesteps=200,
         early_stopping_patience=14,
@@ -176,8 +176,8 @@ class DiseaseSimModel(Model):
 
             # Seed the vaccination in a fraction of the agents
             vaccination_condition = (
-                i >= number_of_agents_to_infect and
-                i < (number_of_agents_to_infect + number_of_agents_to_vaccinate))  # noqa
+                i >= number_of_agents_to_infect
+                and i < (number_of_agents_to_infect + number_of_agents_to_vaccinate))  # noqa
 
             if vaccination_condition:
                 agent.set_state(AgentState.VACCINATED)
@@ -192,7 +192,7 @@ class DiseaseSimModel(Model):
                 "Infectious": lambda m: m.get_population_fraction_by_state(AgentState.INFECTIOUS),  # noqa
                 "Recovered": lambda m: m.get_population_fraction_by_state(AgentState.RECOVERED),  # noqa
                 "Vaccinated": lambda m: m.get_population_fraction_by_state(AgentState.VACCINATED),  # noqa
-                "R0/10": lambda m: m.contact_network.compute_R0()/10.0
+                "R0/10": lambda m: m.contact_network.compute_R0() / 10.0
             }
         )
 
@@ -305,8 +305,8 @@ class DiseaseSimModel(Model):
 
         if self.schedule.steps > self.early_stopping_patience:
             last_N_susceptible_population = \
-                self.datacollector.model_vars["Susceptible"][-1 *
-                                                             self.early_stopping_patience:]  # noqa
+                self.datacollector.model_vars["Susceptible"][-1
+                                                             * self.early_stopping_patience:]  # noqa
             if len(set(last_N_susceptible_population)) == 1:
                 self.running = False
                 return
@@ -369,12 +369,12 @@ if __name__ == "__main__":
         prob_infection=1.0,
         prob_agent_movement=0.0,
         disease_planner_config={
-            "latent_period_mu":  2 * 4,
-            "latent_period_sigma":  0,
-            "incubation_period_mu":  5 * 4,
-            "incubation_period_sigma":  0,
-            "recovery_period_mu":  14 * 4,
-            "recovery_period_sigma":  0,
+            "latent_period_mu": 2 * 4,
+            "latent_period_sigma": 0,
+            "incubation_period_mu": 5 * 4,
+            "incubation_period_sigma": 0,
+            "recovery_period_mu": 14 * 4,
+            "recovery_period_sigma": 0,
         },
         max_timesteps=5,
         early_stopping_patience=14,

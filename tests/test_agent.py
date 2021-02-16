@@ -15,15 +15,15 @@ def test_prob_movement_0():
     model = DiseaseSimModel(
         width=50,
         height=50,
-        population_density=1.0/50
+        population_density=1.0 / 50
     )
 
     unique_id = "uid"
     agent = DiseaseSimAgent(
-                unique_id,
-                model,
-                prob_agent_movement=0.0,
-                moore=True
+        unique_id,
+        model,
+        prob_agent_movement=0.0,
+        moore=True
     )
     agent.pos = (0, 0)
     for k in range(100):
@@ -44,15 +44,15 @@ def test_prob_movement_1():
     model = DiseaseSimModel(
         width=50,
         height=50,
-        population_density=1.0/50
+        population_density=1.0 / 50
     )
 
     unique_id = "uid"
     agent = DiseaseSimAgent(
-                unique_id,
-                model,
-                prob_agent_movement=1.0,
-                moore=True
+        unique_id,
+        model,
+        prob_agent_movement=1.0,
+        moore=True
     )
     agent.pos = (0, 0)
     for k in range(100):

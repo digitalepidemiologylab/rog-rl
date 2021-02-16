@@ -5,7 +5,6 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
 
    rog_rl.envs
 
@@ -13,7 +12,6 @@ Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
 
    rog_rl.agent
    rog_rl.agent_event
