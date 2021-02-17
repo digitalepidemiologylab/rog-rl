@@ -34,11 +34,13 @@ Installation
    pip install -U git+git://gitlab.aicrowd.com/rog-rl/rog-rl.git
    rog-rl-demo
 
-and if everything went well, ideally you should see something along the lines of 
-.. image:: https://imgur.com/yZVvaDq.png
-   :target: https://imgur.com/yZVvaDq.png
-   :alt: this
-.
+and if everything went well, ideally you should see something along the lines of
+
+
+.. image:: https://i.imgur.com/yZVvaDq.png
+   :target: https://i.imgur.com/yZVvaDq.png
+   :alt: 
+
 
 Usage
 -----
@@ -113,8 +115,8 @@ Available Environment Flavours
 
 We provide multiple sets of similar grid based environment with different problem formulations
 
-Rog-RL Multi-Agent
-^^^^^^^^^^^^^^^^^^
+Rog-RL Base Grid Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A 2-D grid world simulation of a disease simulation model where each x,y co-ordinate is a cell which can be empty or have an agent belonging to one of the agent states (Susceptible, Infectious, Recovered/Dead, Vaccinated). The task is to vaccinate the correct cells and once done tick to the next simulation time step.
 
@@ -473,7 +475,7 @@ tests:
 
 .. code-block:: console
 
-   flake8 rog-rl tests
+   flake8 rog_rl tests
    pytest --cov rog_rl
 
 **To run with xvfb**

@@ -15,7 +15,9 @@ pip install -U git+git://gitlab.aicrowd.com/rog-rl/rog-rl.git
 rog-rl-demo
 ```
 
-and if everything went well, ideally you should see something along the lines of ![this](https://imgur.com/yZVvaDq.png).
+and if everything went well, ideally you should see something along the lines of
+
+![](https://i.imgur.com/yZVvaDq.png)
 
 ## Usage
 
