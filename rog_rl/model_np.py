@@ -7,7 +7,6 @@ from scipy.signal import convolve2d
 from collections import deque
 from skimage.measure import label as connected_components
 
-from rog_rl.vaccination_response import VaccinationResponse
 
 class DiseaseSimModel:
     """
@@ -35,9 +34,9 @@ class DiseaseSimModel:
         prob_agent_movement=0.0,
         disease_planner_config={
             "incubation_period_mu": 0,
-            "incubation_period_sigma":  0,
+            "incubation_period_sigma": 0,
             "recovery_period_mu": 20,
-            "recovery_period_sigma":  0,
+            "recovery_period_sigma": 0,
         },
         max_timesteps=200,
         early_stopping_patience=20,
@@ -70,16 +69,16 @@ class DiseaseSimModel:
         self.boundary = 'wrap' if toric else 'fill'
         self.seed = seed
         self.only_count_successful_vaccines = only_count_successful_vaccines
-        
+
         self.last_n_susceptible_fractions = deque(maxlen=early_stopping_patience)
-        
+
         self.rng = np.random.RandomState(seed=self.seed)
         self.gridshape = (self.width, self.height)
-        self.neighbor_kernel_r1 = np.ones((3,3))
-        self.neighbor_kernel_r1[1,1] = 0
-        
+        self.neighbor_kernel_r1 = np.ones((3, 3))
+        self.neighbor_kernel_r1[1, 1] = 0
+
         self.fast_complete_simulation = fast_complete_simulation and not toric
-        
+
         self.initialize_np()
 
         self.running = True
@@ -88,41 +87,40 @@ class DiseaseSimModel:
     ###########################################################################
     # Setup Initialization Helper Functions
     ###########################################################################
-    
+
     def initialize_np(self):
-        
-        #Initial agent state counts
+
+        # Initial agent state counts
         num_empty = self.n_gridpoints - self.n_agents
         n_infect = int(self.initial_infection_fraction * self.n_gridpoints)
         n_vaccine_init = int(self.initial_vaccination_fraction * self.n_gridpoints)
         # Initial infections and initial vaccination adds to more than population density
         assert num_empty + n_infect + n_vaccine_init <= self.n_gridpoints
-            
 
         # Initialize observation
         self.observation = np.zeros((*self.gridshape, len(AgentState)), np.uint8)
         self.observation[..., AgentState.SUSCEPTIBLE.value] = 1
-                            
+
         # Schedule
         self.infection_scheduled_grid = np.zeros(self.gridshape, dtype=np.bool)
         self.infection_base_time_grid = np.zeros(self.gridshape, dtype=np.int32) + np.NINF
         self.schedule_steps = 0
 
         # Initialize time values
-        incubation_period_mu=self.disease_planner_config["incubation_period_mu"]
-        incubation_period_sigma=self.disease_planner_config["incubation_period_sigma"]
-        recovery_period_mu=self.disease_planner_config["recovery_period_mu"]
-        recovery_period_sigma=self.disease_planner_config["recovery_period_sigma"]
-        
+        incubation_period_mu = self.disease_planner_config["incubation_period_mu"]
+        incubation_period_sigma = self.disease_planner_config["incubation_period_sigma"]
+        recovery_period_mu = self.disease_planner_config["recovery_period_mu"]
+        recovery_period_sigma = self.disease_planner_config["recovery_period_sigma"]
+
         exposure_tvals = np.zeros(self.gridshape)
         self.incubation_tvals = self._sample_tvals(incubation_period_mu,
-                                                  incubation_period_sigma,
-                                                  exposure_tvals)
+                                                   incubation_period_sigma,
+                                                   exposure_tvals)
         self.recovery_tvals = self._sample_tvals(recovery_period_mu,
                                                  recovery_period_sigma,
                                                  self.incubation_tvals)
         self.transition_map = {AgentState.SUSCEPTIBLE: [AgentState.INFECTIOUS, self.incubation_tvals],
-                                AgentState.INFECTIOUS: [AgentState.RECOVERED, self.recovery_tvals],}
+                               AgentState.INFECTIOUS: [AgentState.RECOVERED, self.recovery_tvals], }
 
         # Empty cells based on population density
         no_agent_list = self.rng.choice(np.arange(self.n_gridpoints), size=num_empty, replace=False)
@@ -133,13 +131,13 @@ class DiseaseSimModel:
 
         # Infect
         agent_list = list(set(np.arange(self.n_gridpoints)) - set(no_agent_list))
-        infect_list = self.rng.choice(agent_list, size=n_infect, replace=False)       
+        infect_list = self.rng.choice(agent_list, size=n_infect, replace=False)
         infect_locs = (infect_list // self.height, infect_list % self.height)
         self.infection_scheduled_grid[infect_locs] = True
         self.infection_base_time_grid[infect_locs] = self.schedule_steps
         self.observation[self.infection_scheduled_grid] = 0
         self.observation[self.infection_scheduled_grid, AgentState.INFECTIOUS.value] = 1
-                             
+
         # Initial vaccinate
         not_infected = list(set(agent_list) - set(infect_list))
         vaccinate_list = self.rng.choice(not_infected, size=n_vaccine_init, replace=False)
@@ -149,24 +147,24 @@ class DiseaseSimModel:
         self.observation[vaccinate_mask] = 0
         self.observation[vaccinate_mask, AgentState.VACCINATED.value] = 1
         self.max_vaccines = self.n_vaccines + n_vaccine_init
-                            
+
     def _sample_tvals(self, mu, sigma, minvals):
         assert sigma >= 0
         if sigma == 0:
             t = np.maximum(minvals, np.zeros_like(minvals) + mu)
         elif sigma > 0:
-            minv = np.ravel(minvals) # Flatten to 1D as truncnorm.rvs only takes 1D
+            minv = np.ravel(minvals)  # Flatten to 1D as truncnorm.rvs only takes 1D
             a = (minv - mu) / sigma
 #             maxv = np.inf
 #             b = (maxv - mu) / sigma
             b = np.zeros_like(a) + np.inf
-            # truncnorm.rvs can draw from a 1D array of distributions - 
+            # truncnorm.rvs can draw from a 1D array of distributions -
             # But the size parameter doesn't work in multi distribution
             t = truncnorm.rvs(a, b, loc=mu, scale=sigma, random_state=self.rng)
-            
+
         tvals = np.int32(t.reshape(self.gridshape))
         return tvals
-   
+
     ###########################################################################
     ###########################################################################
     # State Aggregation
@@ -174,7 +172,7 @@ class DiseaseSimModel:
     ###########################################################################
 
     def get_observation(self):
-        assert  np.all( (self.observation.sum(axis=-1) + self.no_agent_grid) == 1)
+        assert np.all((self.observation.sum(axis=-1) + self.no_agent_grid) == 1)
         # Assertion disabled for perf reasons
         return self.observation
 
@@ -199,8 +197,8 @@ class DiseaseSimModel:
         self.schedule_steps += 1
         self.propagate_infections_np()
         self.last_n_susceptible_fractions.append(
-                self.get_population_fraction_by_state(
-                     AgentState.SUSCEPTIBLE))
+            self.get_population_fraction_by_state(
+                AgentState.SUSCEPTIBLE))
         self.step_schedule()
         self.simulation_completion_checks()
 
@@ -215,14 +213,14 @@ class DiseaseSimModel:
         """
         if not self.running:
             return False, VaccinationResponse.SIMULATION_NOT_RUNNING
-        
+
         # Case 0 : No vaccines left
         if self.n_vaccines <= 0:
             return False, VaccinationResponse.AGENT_VACCINES_EXHAUSTED
-        
+
         if not self.only_count_successful_vaccines:
             self.n_vaccines -= 1
-            
+
         success = False
 
         agent_state = np.argmax(self.observation[cell_x, cell_y])
@@ -232,13 +230,13 @@ class DiseaseSimModel:
             # Agent is susceptible, and can be vaccinated
             if self.only_count_successful_vaccines:
                 self.n_vaccines -= 1
-                
+
             if self.n_vaccines >= 0:
                 self.observation[cell_x, cell_y] = 0
                 self.observation[cell_x, cell_y, AgentState.VACCINATED.value] = 1
                 # Remove the scheduled infection if vaccine is given before trigger
                 self.infection_scheduled_grid[cell_x, cell_y] = False
-               
+
             response = VaccinationResponse.VACCINATION_SUCCESS
             success = True
         elif agent_state == AgentState.INFECTIOUS.value:
@@ -256,7 +254,7 @@ class DiseaseSimModel:
         # If vaccines finished, run the simulation to end
         if self.n_vaccines == 0:
             self.run_simulation_to_end()
-            
+
         return success, response
     ###########################################################################
     ###########################################################################
@@ -282,12 +280,12 @@ class DiseaseSimModel:
         if susceptible_population <= 0:
             self.running = False
             return
-        
+
         if self.schedule_steps > self.early_stopping_patience:
             if len(set(self.last_n_susceptible_fractions)) == 1:
                 self.running = False
                 return
-            
+
     def run_simulation_to_end(self):
         """
         Finds the final state of the simulation and sets that as the observation
@@ -297,29 +295,28 @@ class DiseaseSimModel:
             return
 
         if self.fast_complete_simulation:
-            
-            obs = self.observation.copy()
-            sus = obs[...,AgentState.SUSCEPTIBLE.value]
 
-            rec = obs[...,AgentState.RECOVERED.value]
+            obs = self.observation.copy()
+            sus = obs[..., AgentState.SUSCEPTIBLE.value]
+
+            rec = obs[..., AgentState.RECOVERED.value]
             # Use the scheduled grid to find current infections and scheduled ones
             sym = np.int32(self.infection_scheduled_grid) - rec
             assert np.all(sym >= 0)
 
             ss = sus + sym
             comps = connected_components(ss, background=0)
-            for cval in range(1, np.max(comps)+1):
+            for cval in range(1, np.max(comps) + 1):
                 match = (comps == cval)
                 if np.any(sym[match]):
                     rec[match] = 1
                     sus[match] = 0
 
-
             self.observation[(rec == 1)] = 0
             self.observation[(rec == 1), AgentState.RECOVERED.value] = 1
             self.observation[(sus == 1)] = 0
             self.observation[(sus == 1), AgentState.SUSCEPTIBLE.value] = 1
-            
+
             self.running = False
         else:
             while self.running:
@@ -331,30 +328,31 @@ class DiseaseSimModel:
         to help avoid confusion in the RL codebases (with the RL step)
         """
         self.step()
-        
+
     def step_schedule(self):
         for state, [nextstate, tvals] in self.transition_map.items():
             time_match = (self.infection_base_time_grid + tvals) == self.schedule_steps
-            state_match  = self.observation[..., state.value]
+            state_match = self.observation[..., state.value]
             should_transition = np.logical_and(time_match, state_match)
             self.observation[should_transition, state.value] = 0
             self.observation[should_transition, nextstate.value] = 1
 
     def propagate_infections_np(self):
-        
+
         # Infect neighbours
         infectious = self.observation[..., AgentState.INFECTIOUS.value]
-        infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1, 
+        infected_neighbours = convolve2d(infectious, self.neighbor_kernel_r1,
                                          mode='same', boundary=self.boundary)
 #         p = np.zeros(self.gridshape) + self.prob_infection
         p = self.prob_infection
         # GP Series if all prob_infection are same --> p + p*(1-p) + p*(1-p)^2 + ... p*(1-p)^(n-1)
-        infection_prob_allneighbours = 1-(1-p)**infected_neighbours
+        infection_prob_allneighbours = 1 - (1 - p)**infected_neighbours
         infected = self.rng.rand(*self.gridshape,) < infection_prob_allneighbours
         already_infected = self.infection_scheduled_grid
         infected = np.logical_and(infected, ~already_infected)
         self.infection_scheduled_grid[infected] = True
         self.infection_base_time_grid[infected] = self.schedule_steps
+
 
 if __name__ == "__main__":
     model = DiseaseSimModel(
@@ -367,10 +365,10 @@ if __name__ == "__main__":
         prob_infection=1.0,
         prob_agent_movement=0.0,
         disease_planner_config={
-            "incubation_period_mu":  5 * 4,
-            "incubation_period_sigma":  0,
-            "recovery_period_mu":  14 * 4,
-            "recovery_period_sigma":  0,
+            "incubation_period_mu": 5 * 4,
+            "incubation_period_sigma": 0,
+            "recovery_period_mu": 14 * 4,
+            "recovery_period_sigma": 0,
         },
         max_timesteps=5,
         early_stopping_patience=14,

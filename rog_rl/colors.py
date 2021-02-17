@@ -112,7 +112,7 @@ class ColorMap:
             return self.COLOR_MAP[d]
         except KeyError:
             raise NotImplementedError(
-                    "Unknown key in ColorMap. Was it initialized ?")
+                "Unknown key in ColorMap. Was it initialized ?")
 
 
 if __name__ == "__main__":

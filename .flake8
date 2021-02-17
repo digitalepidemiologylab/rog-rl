@@ -1,0 +1,5 @@
+[flake8]
+ignore = W503, C901, E203, E402, F821
+max-line-length = 120
+exclude = recording/*,docs/*, coverage_html_report/*
+max-complexity = 15

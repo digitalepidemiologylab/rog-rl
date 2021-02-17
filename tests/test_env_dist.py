@@ -125,7 +125,7 @@ def run_statistical_test(env1, env2):
 
         for kl_val in kl_vals:
             percentile_val = stats.percentileofscore(kl_val_dist, kl_val)
-            percentiles_other_env[key].append(percentile_val/100)
+            percentiles_other_env[key].append(percentile_val / 100)
 
     for _state in AgentState:
         key = "population.{}".format(_state.name)

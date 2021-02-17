@@ -1,0 +1,15 @@
+stages:
+    - build
+    - test
+
+lint-project:
+    stage: build
+    image: python:3.7-slim
+    before_script:
+        - pip install black flake8
+    script:
+        - black --check .
+        - flake8 rog_rl tests
+    only:
+        - master
+        - merge_requests

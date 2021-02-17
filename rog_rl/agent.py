@@ -10,7 +10,7 @@ class DiseaseSimAgent(Agent):  # noqa
     moore = True
     prob_agent_movement = 0.0
 
-    def __init__(self, unique_id, model,  prob_agent_movement=0.0, moore=True):
+    def __init__(self, unique_id, model, prob_agent_movement=0.0, moore=True):
         """
         Customize the agent
         """
