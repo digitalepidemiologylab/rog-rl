@@ -1,4 +1,4 @@
-# Rog RL
+# Rog RL Environment
 
 [![Build Status](https://travis-ci.org/spMohanty/RogRL.svg?branch=master)](https://travis-ci.org/spMohanty/RogRL)
 [![codecov](https://codecov.io/gh/spMohanty/RogRL/branch/master/graph/badge.svg)](https://codecov.io/gh/spMohanty/RogRL)
@@ -70,7 +70,7 @@ while not done:
 
 ## Environment Specifications
 
-We use the [SIR Disease Simulation model](https://royalsocietypublishing.org/doi/10.1098/rspa.1927.0118) for simulating spread of infection from Susceptible to Infectious and finally recovered or dead state. The disease specific parameters can be specified using the [env_config](#available-configurations). Our goal is to vaccinate the susceptible agents so that the susceptible agents do not become infectious.
+We use the [SIR Disease Simulation model](https://royalsocietypublishing.org/doi/10.1098/rspa.1927.0118) for simulating spread of infection from Susceptible to Infectious and finally recovered or dead state. The disease specific parameters can be specified using the [env\_config](#available-configurations). Our goal is to vaccinate the susceptible agents so that the susceptible agents do not become infectious.
 
 We also have 2 notions of step - one is the environment step and the other time step or tick. In an environment step, we can take actions that only change the currently acting agent state and the infections do not propagate. For example, when we vaccinate a cell , only the cell is vaccinated if it is valid and the rest of the environment remains in the same state. Infections only propagate when we do a time step or tick.
 
@@ -81,7 +81,7 @@ The environment completes when one of the conditions are fulfilled and the envir
 - if the timesteps have exceeded the number of max_timesteps
 - the fraction of susceptible population is <= 0
 - the fraction of susceptible population has not changed since the last N timesteps
-    where N is the early_stopping_patience parameter that can be set from the [env_config](#available-configurations).
+    where N is the early_stopping_patience parameter that can be set from the [env\_config](#available-configurations).
 
 ## Available Environment Flavours
 
@@ -166,13 +166,14 @@ A 3D array (width, height, 4) with the 5 channels, first 4 channels containing t
 
 Action can be of the following types
 
+```python
     MOVE_N = 0
     MOVE_E = 1
     MOVE_W = 2
     MOVE_S = 3
     VACCINATE = 4
     SIM_TICK = 5
-
+```
 
 ```python
     from rog_rl import FreeExplorationEnv
@@ -253,9 +254,10 @@ A 3D array (width, height, 4) with the 5 channels, first 4 channels containing t
 
 Action can be of the following types
 
+```python
     MOVE = 0
     VACCINATE = 1
-
+```
 
 ```python
     from rog_rl import FixedOrderExplorationEnv
@@ -318,7 +320,7 @@ Action can be of the following types
 
 Wrapper around an existing rog sim environment specified by adding the name argument as follows
 
-```console
+```python
 env = RogRLStateEnv(config=env_config, name="FreeExplorationEnv-v0")
 ```
 
