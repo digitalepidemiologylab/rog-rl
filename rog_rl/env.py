@@ -499,7 +499,7 @@ class RogRLEnv(gym.Env):
         Handle SIM_TICK action
         """
         # Handle action propagation in real simulator
-        if self.config.get('simulation_single_tick', False):
+        if not self.config.get('simulation_single_tick', False):
             self._model.tick()
         else:
             self._model.run_simulation_to_end()

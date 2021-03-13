@@ -198,6 +198,7 @@ if __name__ == "__main__":
         use_np_model=True,
         toric=False,
         dummy_simulation=False,
+        simulation_single_tick=True,
         debug=True,
         seed=0)
     env = FreeExplorationEnv(config=env_config)

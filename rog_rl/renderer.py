@@ -443,7 +443,7 @@ class ANSIRenderer:
         if isinstance(value, np.floating) or isinstance(value, np.integer) or type(value) in [float, int]:
             self.stats[key] = "{:4.4f}".format(value)
         else:
-             self.stats[key] = value
+            self.stats[key] = value
 
     def render_stats(self):
         # Print all state Metrics First
