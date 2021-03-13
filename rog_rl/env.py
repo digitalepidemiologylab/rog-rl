@@ -324,6 +324,7 @@ class RogRLEnv(gym.Env):
         self.renderer.update_stats("SIMULATION_TICKS", "{}".format(
             _simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
+        self.renderer.update_stats("ENV_STEPS", "{}".format(self._step_count))
 
         self.update_env_renderer_stats()
 
