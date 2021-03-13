@@ -56,7 +56,7 @@ class FixedOrderExplorationEnv(FreeExplorationEnv):
         if self.vacc_agent_x == self.width - 1:
             if self.vacc_agent_y == self.height - 1:
                 # Navigation Complete - Move to next time step
-                self._model.run_simulation_to_end()
+                self.step_tick()
                 self.agent_reset()
             else:
                 self.vacc_agent_y += 1

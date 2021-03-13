@@ -412,7 +412,7 @@ _config =  dict(
     toric=True, # Make the grid world toric
     dummy_simulation=False, # Send dummy observations, rewards etc. Useful when doing integration testing with RL Experiments codebase
     fast_complete_simulation=True,
-    fast_forward=False, # If True, when env steps through time or ticks, the env fast forwards and runs simulation to completion
+    simulation_single_tick=False, # If True, when env steps through time or ticks, the env fast forwards and runs simulation to completion
     debug=True)
 
 env = RogEnv(config=_config)

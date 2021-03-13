@@ -119,12 +119,8 @@ class FreeExplorationEnv(RogRLEnv):
             Handle SIM_TICK action
             """
             # Handle action propagation in real simulator
-            if self.config.get('simulation_single_tick', False):
-                self._model.tick()
-            else:
-                self._model.run_simulation_to_end()
-            _observation = self._model.get_observation()
-            response = "STEP"
+            _observation, response = self.step_tick()
+
         elif action == ActionType.VACCINATE.value:
             """
             Handle VACCINATE action
@@ -139,8 +135,7 @@ class FreeExplorationEnv(RogRLEnv):
             # Force Run simulation to completion if
             # run out of vaccines
             if response == VaccinationResponse.AGENT_VACCINES_EXHAUSTED:
-                self._model.run_simulation_to_end()
-                _observation = self._model.get_observation()
+                _observation, _ = self.step_tick()
 
         elif action == ActionType.MOVE_N.value:
             """
