@@ -334,6 +334,8 @@ class RogRLEnv(gym.Env):
             return self.renderer.get_render_output(obs)
 
         elif self.use_renderer == 'ansi':
+            for key in state_metrics:
+                self.renderer.update_stats(key, state_metrics[key])
             grid = self.get_agents_grid()
             render_output = self.renderer.render(self.width, self.height, grid)
             if self.debug:

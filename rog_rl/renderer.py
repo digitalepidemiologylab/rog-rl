@@ -440,9 +440,10 @@ class ANSIRenderer:
             self.stats[key] = 0
 
     def update_stats(self, key, value):
-        if type(value) != str:
-            raise Exception("renderer.stats value is not String")
-        self.stats[key] = value
+        if isinstance(value, np.floating) or isinstance(value, np.integer) or type(value) in [float, int]:
+            self.stats[key] = "{:4.4f}".format(value)
+        else:
+             self.stats[key] = value
 
     def render_stats(self):
         # Print all state Metrics First
