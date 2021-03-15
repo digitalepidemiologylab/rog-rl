@@ -81,7 +81,38 @@ The environment completes when one of the conditions are fulfilled and the envir
 - if the timesteps have exceeded the number of max_timesteps
 - the fraction of susceptible population is <= 0
 - the fraction of susceptible population has not changed since the last N timesteps
-    where N is the early_stopping_patience parameter that can be set from the [env\_config](#available-configurations).
+  where N is the early_stopping_patience parameter that can be set from the [env\_config](#available-configurations).
+- all Vaccines are exhausted
+
+## Environment Renderers
+
+It is useful to see the environment in action in a human understandable visual way. Renderers are widely used for this purpose in Reinforcement Learning to visualise popular environments like [gym](https://gym.openai.com/docs/), [MuJoCo](http://www.mujoco.org/) etc. In the subsequent sections, we describe the different renderers supported by the `rog-rl` environment.
+
+### ANSI Renderer
+
+The ANSI renderer is useful to directly print output to the console which can show the progress at every environment step. This is simple and is convenient to quickly look at the environment when working in a server/cloud environment or Windows Subsystem for Linux (WSL) on Windows 10
+
+The `human` renderer looks something like this
+
+![](https://imgur.com/yZVvaDq.png)
+
+### Simple Renderer
+
+This is a fast renderer that provides all necessary information and the default to approach to record training/evaluation videos. This works in any cloud/server environment and does not require any display.
+
+We show a sample recording below
+
+![](https://imgur.com/rFF7dOO.gif)
+
+### Legacy renderer versions - Human and PIL Renderer
+
+The human renderer vis similar to the commonly found human renderer in gym environments and uses [Pyglet Library](http://pyglet.org/). This opens a GUI window when it runs and can be much slower than the `simple` renderer. Since it always opens a window, this also requires a display environment to work.
+
+The `human` renderer looks something like this
+
+![](https://imgur.com/oQK1dOk.gif)
+
+The PIL render uses [PIL Library](https://pillow.readthedocs.io/en/stable/). This does not open a GUI window unlike the human renderer, and hence can be useful to save videos in an environment without any display. However this is also significantly slower than the `simple` renderer.
 
 ## Available Environment Flavours
 
@@ -102,8 +133,8 @@ Action space is MultiDiscrete action space of size 3,
 - First 2 indicates x,y co-ordinates
 - The third multidiscrete can be step or vaccinate action for the agent location x,y
 
-    STEP = 0
-    VACCINATE = 1
+  STEP = 0
+  VACCINATE = 1
 
 ```python
     render = "simple"  # "PIL" # "ansi"  # change to "human"
@@ -386,39 +417,37 @@ The wrapper provides additional methods for saving and reverting to states as sh
 
 You can instantiate a RogRL environment with the following configuration options
 
-```python
-
+Finds the final state of the simulation and sets that as the observation
 
 _config =  dict(
-    width=50, # width of the grid
-    height=50, # height of the grid
-    population_density=0.75, # %-age of the grid to be filled by agents
-    vaccine_density=0.05, # no. of vaccines available as a fractions of the population
-    initial_infection_fraction=0.1, # %-age of agents which are infected in the beginning
-    initial_vaccination_fraction=0.05,# %-age of agents which are vaccinated in the beginning
-    prob_infection=0.2, # probability of infection transmission on a single contact
-    prob_agent_movement=0.0, # probability that an agent will attempt to move an empty cell around it
-    disease_planner_config={
-        "latent_period_mu" :  2 * 4,
-        "latent_period_sigma" :  0,
-        "incubation_period_mu" :  5 * 4,
-        "incubation_period_sigma" :  0,
-        "recovery_period_mu" :  14 * 4,
-        "recovery_period_sigma" :  0,
-    },
-    max_timesteps=200, # maximum timesteps per episode
-    early_stopping_patience=14, # in-simulator steps to wait with the same susceptible population fraction before concluding that the simulation has ended
-    use_renderer=False, # Takes : False, "simple", "ansi" , "PIL", "human"
-    toric=True, # Make the grid world toric
-    dummy_simulation=False, # Send dummy observations, rewards etc. Useful when doing integration testing with RL Experiments codebase
-    fast_complete_simulation=True,
-    simulation_single_tick=False, # If True, when env steps through time or ticks, the env fast forwards and runs simulation to completion
-    debug=True)
+width=50, # width of the grid
+height=50, # height of the grid
+population_density=0.75, # %-age of the grid to be filled by agents
+vaccine_density=0.05, # no. of vaccines available as a fractions of the population
+initial_infection_fraction=0.1, # %-age of agents which are infected in the beginning
+initial_vaccination_fraction=0.05,# %-age of agents which are vaccinated in the beginning
+prob_infection=0.2, # probability of infection transmission on a single contact
+prob_agent_movement=0.0, # probability that an agent will attempt to move an empty cell around it
+disease_planner_config={
+"latent_period_mu" :  2 * 4,
+"latent_period_sigma" :  0,
+"incubation_period_mu" :  5 * 4,
+"incubation_period_sigma" :  0,
+"recovery_period_mu" :  14 * 4,
+"recovery_period_sigma" :  0,
+},
+max_timesteps=200, # maximum timesteps per episode
+early_stopping_patience=14, # in-simulator steps to wait with the same susceptible population fraction before concluding that the simulation has ended
+use_renderer=False, # Takes : False, "simple", "ansi" , "PIL", "human"
+toric=True, # Make the grid world toric
+dummy_simulation=False, # Send dummy observations, rewards etc. Useful when doing integration testing with RL Experiments codebase
+fast_complete_simulation=True, # If True, finds the final state of the simulation and sets that as the observation. If False, the environment does time step or ticks till the terminal condition of the environment is met
+simulation_single_tick=False, # If True, when env steps through time or ticks, the env fast forwards and runs simulation to completion
+debug=True # If True, this prints the renderer output. This is used for the ANSI Renderer which prints the output to the console.
+
+)
 
 env = RogEnv(config=_config)
-
-
-```
 
 ## Environment Metrics
 
@@ -448,17 +477,22 @@ We summarise the values of all our normalised metrics for the 4 scenarios in the
 
 
 | Perfect ring vaccination | Optimal usage of vaccines | normalized_susceptible | normalized_protected | vaccine_wastage |
-| :-: | :-: | :-: | :-: | :-: |
-| YES | YES | 1 | 1 | 0 |
-| YES | NO | <1 | 1 | >0 |
-| NO | YES | <1 | <1 | 0 |
-| NO | NO | <1 | <1 | >0 |
+| :----------------------: | :-----------------------: | :--------------------: | :------------------: | :-------------: |
+|           YES            |            YES            |           1            |          1           |        0        |
+|           YES            |            NO             |           <1           |          1           |    >0 or <0     |
+|            NO            |            YES            |           <1           |          <1          |        0        |
+|            NO            |            NO             |           <1           |          <1          |    >0 or <0     |
 
 Based on the table, we can see that the preferred values for normalized_susceptible, normalized_protected and vaccine_wastage are 1, 1 and 0 respectively and greater the difference from these values, the worse is the agent performance.
 
 In terms of the normalised metrics, most desirable agent performance is a normalized_susceptible value of 1, followed by a normalized_protected value of 1. Both of these ensure that the disease does not spread to other susceptible agents.
 
 The normalised_susceptible metric combines the 2 metrics normalised protected and vaccine_wastage into one number. This single metric is useful to compare against other agent runs to understand which agent performance is better.
+
+## Environment Dynamics
+
+Refer [here](./ENVIRONMENT.md).
+
 ## Contributing
 
 ### Writing code
