@@ -41,7 +41,7 @@ class RogRLEnv(gym.Env):
             use_renderer=False,  # can be "simple", "ansi"
             toric=True,
             fast_complete_simulation=True,
-            fast_forward=False,
+            simulation_single_tick=False,
             dummy_simulation=False,
             debug=False)
         self.config = {}
@@ -324,6 +324,7 @@ class RogRLEnv(gym.Env):
         self.renderer.update_stats("SIMULATION_TICKS", "{}".format(
             _simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
+        self.renderer.update_stats("ENV_STEPS", "{}".format(self._step_count))
 
         self.update_env_renderer_stats()
 
@@ -334,6 +335,8 @@ class RogRLEnv(gym.Env):
             return self.renderer.get_render_output(obs)
 
         elif self.use_renderer == 'ansi':
+            for key in state_metrics:
+                self.renderer.update_stats(key, state_metrics[key])
             grid = self.get_agents_grid()
             render_output = self.renderer.render(self.width, self.height, grid)
             if self.debug:
@@ -490,6 +493,19 @@ class RogRLEnv(gym.Env):
 
         response = "STEP"
 
+        return _observation, response
+
+    def step_tick(self):
+        """
+        Handle SIM_TICK action
+        """
+        # Handle action propagation in real simulator
+        if not self.config.get('simulation_single_tick', False):
+            self._model.tick()
+        else:
+            self._model.run_simulation_to_end()
+        _observation = self._model.get_observation()
+        response = "STEP"
         return _observation, response
 
     def step(self, action):

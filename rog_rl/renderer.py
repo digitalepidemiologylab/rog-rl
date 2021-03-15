@@ -81,6 +81,9 @@ class Renderer:
         self.stats["GAME_TICKS"] = 0
         self.stats["VACCINE_BUDGET"] = 0
 
+        # Env Step Progress
+        self.stats["ENV_STEPS"] = 0
+
         self.stats["SCORE"] = 0
 
         self.stats["TEXT_STRINGS"] = {}
@@ -218,7 +221,7 @@ class Renderer:
         ))
 
         top_y -= 2 * rect_height + self.AGENT_STATUS_LINE_SPACE
-        for _state in ["SIMULATION_TICKS", "GAME_TICKS", "VACCINE_BUDGET"]:
+        for _state in ["SIMULATION_TICKS", "GAME_TICKS", "VACCINE_BUDGET", "ENV_STEPS"]:
             _text_string = str(self.stats[_state])
             _text_string += " "
             _text_string += _state
@@ -430,6 +433,7 @@ class ANSIRenderer:
             "VACCINE_BUDGET": 1.0,
             "SIMULATION_TICKS": 0,
             "GAME_TICKS": 0,
+            "ENV_STEPS": 0,
 
             "VACC_AGENT_X": None,
             "VACC_AGENT_Y": None
@@ -440,9 +444,10 @@ class ANSIRenderer:
             self.stats[key] = 0
 
     def update_stats(self, key, value):
-        if type(value) != str:
-            raise Exception("renderer.stats value is not String")
-        self.stats[key] = value
+        if isinstance(value, np.floating) or isinstance(value, np.integer) or type(value) in [float, int]:
+            self.stats[key] = "{:4.4f}".format(value)
+        else:
+            self.stats[key] = value
 
     def render_stats(self):
         # Print all state Metrics First
@@ -469,6 +474,9 @@ class ANSIRenderer:
         )
         render_string += "Vaccine Budget\t: {} ║ ".format(
             self.stats["VACCINE_BUDGET"]
+        )
+        render_string += "Env Steps\t: {} ║ ".format(
+            self.stats["ENV_STEPS"]
         )
         render_string += "\n"
 
@@ -662,7 +670,7 @@ class PILRenderer(Renderer):
         ))
 
         top_y -= 2 * rect_height + self.AGENT_STATUS_LINE_SPACE
-        for _state in ["SIMULATION_TICKS", "GAME_TICKS", "VACCINE_BUDGET"]:
+        for _state in ["SIMULATION_TICKS", "GAME_TICKS", "VACCINE_BUDGET", "ENV_STEPS"]:
             _text_string = str(self.stats[_state])
             _text_string += " "
             _text_string += _state
@@ -728,7 +736,7 @@ class SimpleRenderer:
         self.text_img = np.zeros((minimagesize, minimagesize, 3), np.uint8) + 255
         text = ['Susceptible', 'Infected', 'Recovered', 'Vaccinated',
                 'Vacs Left', 'Env Steps', 'Sim Ticks']
-        self.stat_keys = ['VACCINE_BUDGET', 'GAME_TICKS', 'SIMULATION_TICKS']
+        self.stat_keys = ['VACCINE_BUDGET', 'GAME_TICKS', 'SIMULATION_TICKS', 'ENV_STEPS']
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.fontScale = 0.35
         self.fontColor = (0, 0, 0)

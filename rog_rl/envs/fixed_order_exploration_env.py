@@ -56,7 +56,7 @@ class FixedOrderExplorationEnv(FreeExplorationEnv):
         if self.vacc_agent_x == self.width - 1:
             if self.vacc_agent_y == self.height - 1:
                 # Navigation Complete - Move to next time step
-                self._model.run_simulation_to_end()
+                self.step_tick()
                 self.agent_reset()
             else:
                 self.vacc_agent_y += 1
@@ -94,9 +94,7 @@ class FixedOrderExplorationEnv(FreeExplorationEnv):
             # Force Run simulation to completion if
             # run out of vaccines
             if response == VaccinationResponse.AGENT_VACCINES_EXHAUSTED:
-                while self._model.is_running():
-                    self._model.tick()
-                    _observation = self._model.get_observation()
+                _observation, _ = self.step_tick()
 
             self.move_action()
 
@@ -129,7 +127,7 @@ if __name__ == "__main__":
         use_np_model=True,
         toric=False,
         dummy_simulation=False,
-        fast_forward=True,
+        simulation_single_tick=True,
         debug=True,
         seed=0)
     env = FixedOrderExplorationEnv(config=env_config)

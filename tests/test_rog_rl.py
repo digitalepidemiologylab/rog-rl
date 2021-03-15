@@ -14,7 +14,7 @@ names = ['BaseGridRogRLEnv-v0', 'FreeExplorationEnv-v0',
 
 
 @pytest.mark.parametrize('name, width, height, toric, dummy_simulation, \
-                         use_renderer,use_np_model,fast_forward', [
+                         use_renderer,use_np_model,simulation_single_tick', [
     (names[0], 5, 5, False, False, "human", True, True),
     (names[0], 10, 10, True, False, "ansi", True, True),
     (names[0], 10, 10, True, False, "PIL", True, False),
@@ -45,7 +45,7 @@ names = ['BaseGridRogRLEnv-v0', 'FreeExplorationEnv-v0',
     (names[3], 20, 20, False, False, False, True, True),
 ])
 def test_env_instantiation(name, width, height, toric, dummy_simulation,
-                           use_renderer, use_np_model, fast_forward):
+                           use_renderer, use_np_model, simulation_single_tick):
     """
     Test that standard gym env actions
     methods like reset, step
@@ -66,7 +66,7 @@ def test_env_instantiation(name, width, height, toric, dummy_simulation,
         debug=True,
         np_random=seed,
         use_np_model=use_np_model,
-        fast_forward=fast_forward
+        simulation_single_tick=simulation_single_tick
     )
     env = gym.make(name, config=env_config)
     np.random.seed(seed)

@@ -311,11 +311,11 @@ class DiseaseSimModel(Model):
                 self.running = False
                 return
 
-    def tick(self, fast_forward=False):
+    def tick(self, simulation_single_tick=False):
         """
         provides option for fast forwarding
         """
-        if fast_forward:
+        if simulation_single_tick:
             while self.is_running():
                 self.tick_once()
         else:
