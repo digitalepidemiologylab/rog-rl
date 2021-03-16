@@ -94,7 +94,7 @@ We show the perfect ring vaccination policy trained using an RL Agent trained af
 "normalized_vaccine_wastage": 0, "normalized_susceptible": 1.00,    "normalized_protected": 1.00
 ```
 
-Notice for the toric grid, the infectious agent at cell `(4,1)` is surrounded by vaccines and hence no infection spreads and there is also no wastage of vaccines with only the 8 cells adjacent to the infectious cell is vaccinated.
+Notice for the toric grid, the infectious agent at cell `(4,1)` is surrounded by vaccines and hence no infection spreads and there is also no wastage of vaccines as only the 8 cells adjacent to the infectious cell is vaccinated.
 
 ## Comparing different vaccination strategy
 
@@ -113,3 +113,73 @@ Agent 2
 ```
 
 We can see Agent 2 is better as it has a higher `normalized_susceptible` score. It is also easy to see this by just comparing the `normalized_vaccine_wastage` score as the `normalized_protected = 1` for both of them. If the `normalized_protected` score was higher for Agent 1, then it would not be obvious and we can then use the `normalized_susceptible` score to decide on the better agent.
+
+## Is ring vaccination always the best strategy?
+
+We can have cases where ring vaccination is not always the best strategy. One such case happens when the number of vaccinations available is not enough to ring vaccinate.
+
+Lets assume we have a non-toric grid with width,height as 7,5 respectively with total number of agents as 35. There are 2 Infectious agents and we have only 8 vaccines. We also for simplicity assume that the `simulation_single_tick = True`, so the vaccinations happen in the first time step and then the simulation is allowed to run till completion.
+
+![](https://i.imgur.com/VQa47d8.png)
+
+We can see that the number of vaccines required to fully ring vaccinate the 2 infectious agents is 13. If we follow a simple ring vaccination strategy with the available 8 vaccines, we can only ring vaccinate one infectious agent and the infection spreads due to the other agent. If we run the simulation, we end up with the following scenario as shown in the screenshot below for the last 2 steps.
+
+![](https://i.imgur.com/P26glb2.png)
+
+The normalised metrics are as follows
+
+```python
+'normalized_vaccine_wastage': -0.25, 'normalized_susceptible': 0.0, 'normalized_protected': 0.24242424242424243
+```
+
+Now, if we were to intelligently try to create grid areas seperating different infectious agents. The last 2 steps now becomes
+
+![](https://i.imgur.com/6XaS3Ci.png)
+
+
+```python
+'normalized_vaccine_wastage': -0.3, 'normalized_susceptible': 1.0, 'normalized_protected': 0.8181818181818181
+```
+
+
+If we make the above problem further difficult, by providing only 5 vaccines, then the intelligent vaccination approach is still able to protect many agents, but the ring vaccination performs worse.
+
+Below screenshot shows the last 2 steps for the ring vaccination strategy
+
+![](https://i.imgur.com/5BzRdlj.png)
+
+
+```python
+'normalized_vaccine_wastage': -0.4, 'normalized_susceptible': 0.0, 'normalized_protected': 0.15151515151515152
+
+```
+
+Similarly for a grid vaccination approach, the last 2 steps are
+
+![](https://i.imgur.com/NGuR2Bu.png)
+
+
+```python
+'normalized_vaccine_wastage': -0.4, 'normalized_susceptible': 1.0, 'normalized_protected': 0.7575757575757575
+```
+
+
+We can clearly see that the grid vaccination performs far better than the ring vaccination. It is able to protect more susceptible agents and also conserve vaccines.
+
+This is only a simple scenario involving 2 infection clusters in a simple `7*5`  grid environment and hence it was easy to find that a grid based vaccination strategy is better than a ring vaccination strategy. When the environment becomes much larger with different infection clusters (which is also what happens practically in real life), it becomes difficult to find these grids and vaccinate.
+
+However, we think an intelligent RL (Reinforcement Learning) agent will be able to learn and provide us with optimal solutions than can help guide future vaccination policy and strategy. We have been able  to train a RL agent that was able to learn ring vaccination by providing a local view of an agent with various local radius sizes ranging from the nearest neighbours to a view involving agents seperated by upto 3 cells. These successful experiments provides us with the impetus so that we can in future also successfully train RL agents that can learn various other vaccination strategies in large environments. A RL solution will also have the added benefit of being scalable which is a critical requirement.
+
+## Apply stochasticity to the problem
+
+We notice that our parameters like the`initial_infection_fraction`, `vaccine density`, `prob_infection` are all constant, but in a real life scenario these are uncertain estimates. We can add a stochastic element to these data and that further increases the complexity of the problem.
+
+We think this also makes an RL solution more well suited to a hand designed expert solution.
+
+## Incorporating Vaccine efficiency
+
+Currently we also assume that the vaccination has a `100%` success rate where an vaccinated agent can not be infected. However as typically seen in practice, vaccines have an efficacy rate less than `100%` thereby making the problem of vaccination tricky.
+
+## Adding multiple time steps for vaccine intravention
+
+We have in all previous examples assumed that we only make the vaccination decision once, and then the simulation happens till the terminal condition is reached. If we allow for vaccine intraventions as the simulation progresses through different time steps, the problem gets more complicated where decisions additionally rely on whether to vaccinate ahead of time or to wait and watch and then vaccinate.
