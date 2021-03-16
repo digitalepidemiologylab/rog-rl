@@ -453,13 +453,15 @@ env = RogEnv(config=_config)
 
 Apart from the standard reward metrics, it can be useful to look at the different agent states to get an idea of the effectiveness of our vaccine. A good vaccination strategy means the number of susceptible agents should be high, while the other agent states namely Infectious and recovered should be less. An optimal usage of vaccines would further mean the least amount of vaccines used or less number of agents in vaccinated state.
 
-To measure this across different environment configurations and environment types, we come up with the following normalised set of metrics in the range of [0,1]
+To measure this across different environment configurations and environment types, we come up with the following normalised set of metrics. 
 
 * `normalized_susceptible`
 * `normalized_protected `
 * `vaccine_wastage`
 
 All the normalised metrics are generated at the end of the episode and can be found in the `info` returned by the env's `step` method. When the episode has finished, the `done` returned by the env's `step` method is `True`
+
+The range of the `normalized_susceptible` and the `normalized_protected` is [0,1], while the `vaccine_wastage` is always < `1` with `0` as the perfect score. `vaccine_wastage` can also have negative values if it doesn't utilise its vaccines.
 
 The most desired agent behavior is
 
