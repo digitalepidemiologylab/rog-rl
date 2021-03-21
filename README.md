@@ -1,9 +1,5 @@
 # Rog RL Environment
 
-[![Build Status](https://travis-ci.org/spMohanty/RogRL.svg?branch=master)](https://travis-ci.org/spMohanty/RogRL)
-[![codecov](https://codecov.io/gh/spMohanty/RogRL/branch/master/graph/badge.svg)](https://codecov.io/gh/spMohanty/RogRL)
-[![Documentation Status](https://readthedocs.org/projects/rogrl/badge/?version=latest)](https://rogrl.readthedocs.io/en/latest/?badge=latest)
-
 ![](https://i.imgur.com/qPAu80s.png)
 
 A simple Gym environment for RL experiments around disease transmission in a grid world environment.
