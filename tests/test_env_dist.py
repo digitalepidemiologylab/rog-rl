@@ -6,6 +6,7 @@ from itertools import permutations
 from scipy import stats
 import random
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -69,8 +70,7 @@ def test_env_mesa_model_distributions(env, all_mesa_envs):
 
 
 @pytest.mark.skip(reason="legacy mesa model is not supported")
-def test_single_agent_env_mesa_model_distributions(single_agent_env,
-                                                   all_mesa_envs):
+def test_single_agent_env_mesa_model_distributions(single_agent_env, all_mesa_envs):
     single_agent_env_mesa = all_mesa_envs[1]
     run_statistical_test(single_agent_env, single_agent_env_mesa)
 
@@ -132,9 +132,9 @@ def run_statistical_test(env1, env2):
         perc_vals = percentiles_other_env[key]
         if len(set(perc_vals)) > 1:
             T = stats.uniform(0, 1).rvs(len(perc_vals), random_state=seed)
-            statistic_ad, critical_values_ad, significance_level = \
-                stats.anderson_ksamp([
-                    T, perc_vals])
+            statistic_ad, critical_values_ad, significance_level = stats.anderson_ksamp(
+                [T, perc_vals]
+            )
             print(statistic_ad)
 
             # The critical values for significance
@@ -143,9 +143,15 @@ def run_statistical_test(env1, env2):
 
             # Check at 5% confidence level
             if statistic_ad < critical_values_ad[4]:
-                print(key, " is uniform based on AD test", )
+                print(
+                    key,
+                    " is uniform based on AD test",
+                )
             else:
-                print(key, " is not uniform based on AD test", )
+                print(
+                    key,
+                    " is not uniform based on AD test",
+                )
 
             # Fail test at 10% confidence level
             assert statistic_ad < critical_values_ad[5]
@@ -157,4 +163,5 @@ def run_statistical_test(env1, env2):
 if __name__ == "__main__":
     import pytest
     import sys
+
     sys.exit(pytest.main(["-sv", __file__]))

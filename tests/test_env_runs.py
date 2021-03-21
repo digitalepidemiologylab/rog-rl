@@ -1,6 +1,7 @@
 from rog_rl.env import ActionType
 import pytest
 import numpy as np
+
 seed = 1000  # 10000 fails
 
 
@@ -39,4 +40,5 @@ def test_actions_free_exploration_env(free_exploration_env):
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main(["-v", __file__]))

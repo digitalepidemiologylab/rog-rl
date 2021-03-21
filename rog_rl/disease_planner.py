@@ -15,11 +15,11 @@ class DiseasePlannerBase:
 
     def get_disease_plan(self, base_timestep=0):
         """
-            Plans out the schedule of the state transitions for a
-            particular agent using a particular disease model.
+        Plans out the schedule of the state transitions for a
+        particular agent using a particular disease model.
 
-            It returns a list of AgentEvent objects which have to be
-            "executed" by the Agent at the right moment.
+        It returns a list of AgentEvent objects which have to be
+        "executed" by the Agent at the right moment.
         """
         return []
 
@@ -29,26 +29,26 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
     This class plans the schedule of different state transitions for a disease
     """
 
-    def __init__(self,
-                 incubation_period_mu=5 * 4,
-                 incubation_period_sigma=3 * 4,
-                 recovery_period_mu=14 * 4,
-                 recovery_period_sigma=1 * 4,
-                 random=False
-                 ):
+    def __init__(
+        self,
+        incubation_period_mu=5 * 4,
+        incubation_period_sigma=3 * 4,
+        recovery_period_mu=14 * 4,
+        recovery_period_sigma=1 * 4,
+        random=False,
+    ):
 
         self.incubation_period_mu = incubation_period_mu
         self.incubation_period_sigma = incubation_period_sigma
         self.recovery_period_mu = recovery_period_mu
         self.recovery_period_sigma = recovery_period_sigma
 
-        variable_list = [
-            incubation_period_mu,
-            recovery_period_mu]
-        assert incubation_period_mu != recovery_period_mu, \
-            "incubation_period_mu cannot be equal to recovery_period_mu"
+        variable_list = [incubation_period_mu, recovery_period_mu]
+        assert (
+            incubation_period_mu != recovery_period_mu
+        ), "incubation_period_mu cannot be equal to recovery_period_mu"
 
-        if not(variable_list == sorted(variable_list)):
+        if not (variable_list == sorted(variable_list)):
             """
             Cases arises when the provided latent, incubation and
             recovery period are not in increasing order.
@@ -61,6 +61,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         self.random = random
         if not self.random:
             import random
+
             self.random = random
 
     def get_disease_plan(self, base_timestep=0):
@@ -69,15 +70,12 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         "executed" by the Agent at the right moment.
         """
         disease_progression = self.sample_disease_progression()
-        return self.build_disease_plan(
-            disease_progression,
-            base_timestep
-        )
+        return self.build_disease_plan(disease_progression, base_timestep)
 
     def sample_disease_progression(self):
         """
-            Plans out the schedule of the state transitions for a
-            particular agent using a particular disease model.
+        Plans out the schedule of the state transitions for a
+        particular agent using a particular disease model.
         """
 
         # Case when the patient gets an infection
@@ -93,8 +91,11 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         #############################################
         incubation_period = -1
         while True:
-            incubation_period = round(self.random.normalvariate(
-                self.incubation_period_mu, self.incubation_period_sigma))
+            incubation_period = round(
+                self.random.normalvariate(
+                    self.incubation_period_mu, self.incubation_period_sigma
+                )
+            )
             if incubation_period > 0:
                 break
 
@@ -109,8 +110,11 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         #############################################
         recovery_period = -1
         while True:
-            recovery_period = round(self.random.normalvariate(
-                self.recovery_period_mu, self.recovery_period_sigma))
+            recovery_period = round(
+                self.random.normalvariate(
+                    self.recovery_period_mu, self.recovery_period_sigma
+                )
+            )
             if recovery_period > incubation_period:
                 break
 
@@ -124,8 +128,11 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         #
         #############################################
         #############################################
-        latent_period, incubation_period, recovery_period = \
-            self.sample_disease_progression()
+        (
+            latent_period,
+            incubation_period,
+            recovery_period,
+        ) = self.sample_disease_progression()
         disease_plan = []
 
         # Susceptible -> Exposed | Now
@@ -133,7 +140,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         _event = AgentEvent(
             previous_state=AgentState.SUSCEPTIBLE,
             new_state=AgentState.EXPOSED,
-            update_timestep=timestep
+            update_timestep=timestep,
         )
         disease_plan.append(_event)
 
@@ -142,7 +149,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         _event = AgentEvent(
             previous_state=AgentState.EXPOSED,
             new_state=AgentState.INFECTIOUS,
-            update_timestep=timestep
+            update_timestep=timestep,
         )
         disease_plan.append(_event)
 
@@ -151,7 +158,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         _event = AgentEvent(
             previous_state=AgentState.INFECTIOUS,
             new_state=AgentState.SYMPTOMATIC,
-            update_timestep=timestep
+            update_timestep=timestep,
         )
         disease_plan.append(_event)
 
@@ -160,7 +167,7 @@ class SEIRDiseasePlanner(DiseasePlannerBase):
         _event = AgentEvent(
             previous_state=AgentState.SYMPTOMATIC,
             new_state=AgentState.RECOVERED,
-            update_timestep=timestep
+            update_timestep=timestep,
         )
         disease_plan.append(_event)
 
@@ -172,12 +179,13 @@ class SimpleSEIRDiseasePlanner(SEIRDiseasePlanner):
     This class plans the schedule of different state transitions for a disease
     """
 
-    def __init__(self,
-                 latent_period=2 * 1,
-                 incubation_period=5 * 1,
-                 recovery_period=14 * 1,
-                 random=False
-                 ):
+    def __init__(
+        self,
+        latent_period=2 * 1,
+        incubation_period=5 * 1,
+        recovery_period=14 * 1,
+        random=False,
+    ):
         self.latent_period_mu = latent_period
         self.latent_period_sigma = 0
 
@@ -190,6 +198,7 @@ class SimpleSEIRDiseasePlanner(SEIRDiseasePlanner):
         self.random = random
         if not self.random:
             import random
+
             self.random = random
 
 

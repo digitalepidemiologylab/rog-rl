@@ -21,7 +21,7 @@ def test_agent_state():
         "INFECTIOUS",
         # "SYMPTOMATIC",
         "RECOVERED",
-        "VACCINATED"
+        "VACCINATED",
     ]
 
     AVAILABLE_STATES = []

@@ -45,9 +45,7 @@ class FixedOrderExplorationEnv(FreeExplorationEnv):
 
         VACCINATE : Vaccinates the current location of the vaccination-agent
         """
-        return spaces.Discrete(
-            len(ActionType)
-        )
+        return spaces.Discrete(len(ActionType))
 
     def set_action_type(self):
         self.action_type = ActionType
@@ -87,8 +85,7 @@ class FixedOrderExplorationEnv(FreeExplorationEnv):
             # Vaccinate the cell where the vaccination agent currently is
             cell_x = self.vacc_agent_x
             cell_y = self.vacc_agent_y
-            vaccination_success, response = \
-                self._model.vaccinate_cell(cell_x, cell_y)
+            vaccination_success, response = self._model.vaccinate_cell(cell_x, cell_y)
             _observation = self._model.get_observation()
 
             # Force Run simulation to completion if
@@ -129,7 +126,8 @@ if __name__ == "__main__":
         dummy_simulation=False,
         simulation_single_tick=True,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = FixedOrderExplorationEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True

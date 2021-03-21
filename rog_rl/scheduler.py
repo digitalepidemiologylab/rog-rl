@@ -27,9 +27,8 @@ class CustomScheduler(RandomActivation):
                 pass
 
     def update_agent_state_in_registry(
-            self,
-            agent: Agent,
-            previous_state: AgentState) -> None:
+        self, agent: Agent, previous_state: AgentState
+    ) -> None:
         del self._agent_state_index[previous_state][agent.unique_id]
         self._agent_state_index[agent.state][agent.unique_id] = agent
 
@@ -48,6 +47,5 @@ class CustomScheduler(RandomActivation):
 
     def get_agent_fraction_by_state(self, state: AgentState) -> int:
         """ Returns the current number of agents in a particular state. """
-        _frac = \
-            len(self._agent_state_index[state].keys()) / self.get_agent_count()
+        _frac = len(self._agent_state_index[state].keys()) / self.get_agent_count()
         return _frac

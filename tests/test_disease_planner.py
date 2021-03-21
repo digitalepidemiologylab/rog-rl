@@ -12,9 +12,9 @@ import numpy as np
 @pytest.mark.skip(reason="legacy mesa model is not supported")
 def tests_sanity_of_parameters_provided():
     """
-        Ensures that the parameters
-        provided for disease progression period models
-        are sensible.
+    Ensures that the parameters
+    provided for disease progression period models
+    are sensible.
     """
 
     for k in range(1000):
@@ -25,9 +25,8 @@ def tests_sanity_of_parameters_provided():
         incubation_period_sigma = 0
         recovery_period_sigma = 0
 
-        variables_list = \
-            [latent_period_mu, incubation_period_mu, recovery_period_mu]
-        if not(variables_list == sorted(variables_list)):
+        variables_list = [latent_period_mu, incubation_period_mu, recovery_period_mu]
+        if not (variables_list == sorted(variables_list)):
             """
             An exception should be raised whenever we dont meet the criteria
             of :
@@ -41,7 +40,7 @@ def tests_sanity_of_parameters_provided():
                     incubation_period_sigma=incubation_period_sigma,  # noqa
                     recovery_period_mu=recovery_period_mu,
                     recovery_period_sigma=recovery_period_sigma,
-                    random=False
+                    random=False,
                 )
 
 
@@ -57,8 +56,7 @@ def tests_zero_sigma_gives_constant_values():
 
         latent_period_mu = np.random.randint(1, 100)
         incubation_period_mu = latent_period_mu + np.random.randint(1, 100)
-        recovery_period_mu = \
-            incubation_period_mu + np.random.randint(1, 100)
+        recovery_period_mu = incubation_period_mu + np.random.randint(1, 100)
 
         latent_period_sigma = 0
         incubation_period_sigma = 0
@@ -71,11 +69,14 @@ def tests_zero_sigma_gives_constant_values():
             incubation_period_sigma=incubation_period_sigma,
             recovery_period_mu=recovery_period_mu,
             recovery_period_sigma=recovery_period_sigma,
-            random=False
+            random=False,
         )
 
-        latent_period, incubation_period, recovery_period = \
-            disease_planner.sample_disease_progression()
+        (
+            latent_period,
+            incubation_period,
+            recovery_period,
+        ) = disease_planner.sample_disease_progression()
 
         assert latent_period == latent_period_mu
         assert incubation_period == incubation_period_mu

@@ -9,6 +9,7 @@ class Colors:
 
     Can potentially use : https://github.com/secretBiology/SecretColors/
     """
+
     WHITE = (255, 255, 255)
     RED = (229, 57, 53)
     PINK = (216, 27, 96)
@@ -102,7 +103,9 @@ class ColorMap:
 
                 self.COLOR_MAP["R0/10"] = self.ANSI_COLORS.BACK_CYAN
                 self.COLOR_MAP["BACKGROUND_COLOR"] = self.ANSI_COLORS.FORE_WHITE  # noqa
-                self.COLOR_MAP["AGENT_STATE_TEXT_COLOR"] = self.ANSI_COLORS.FORE_WHITE  # noqa
+                self.COLOR_MAP[
+                    "AGENT_STATE_TEXT_COLOR"
+                ] = self.ANSI_COLORS.FORE_WHITE  # noqa
 
                 self.COLOR_MAP["BACK_RESET"] = self.ANSI_COLORS.BACK_RESET
                 self.COLOR_MAP["FORE_RESET"] = self.ANSI_COLORS.FORE_RESET
@@ -111,8 +114,7 @@ class ColorMap:
         try:
             return self.COLOR_MAP[d]
         except KeyError:
-            raise NotImplementedError(
-                "Unknown key in ColorMap. Was it initialized ?")
+            raise NotImplementedError("Unknown key in ColorMap. Was it initialized ?")
 
 
 if __name__ == "__main__":

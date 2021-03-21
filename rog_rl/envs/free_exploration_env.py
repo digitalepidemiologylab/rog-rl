@@ -44,14 +44,8 @@ class FreeExplorationEnv(RogRLEnv):
 
     def update_env_renderer_stats(self):
         # Add VACC_AGENT coords to render state
-        self.renderer.update_stats(
-            "VACC_AGENT_X",
-            str(self.vacc_agent_x)
-        )
-        self.renderer.update_stats(
-            "VACC_AGENT_Y",
-            str(self.vacc_agent_y)
-        )
+        self.renderer.update_stats("VACC_AGENT_X", str(self.vacc_agent_x))
+        self.renderer.update_stats("VACC_AGENT_Y", str(self.vacc_agent_y))
 
     def set_observation_space(self):
         # In case we club the Exposed, Symptomatic, Infectious, and Vaccinated
@@ -69,10 +63,8 @@ class FreeExplorationEnv(RogRLEnv):
         return spaces.Box(
             low=np.uint8(0),
             high=np.uint8(1),
-            shape=(
-                self.width,
-                self.height,
-                self.observation_channels))
+            shape=(self.width, self.height, self.observation_channels),
+        )
 
     def set_action_space(self):
         """
@@ -86,9 +78,7 @@ class FreeExplorationEnv(RogRLEnv):
         VACCINATE : Vaccinates the current location of the vaccination-agent
         SIM_TICK : adds a simulation tick to the disease model
         """
-        return spaces.Discrete(
-            len(ActionType)
-        )
+        return spaces.Discrete(len(ActionType))
 
     def set_action_type(self):
         self.action_type = ActionType
@@ -128,8 +118,7 @@ class FreeExplorationEnv(RogRLEnv):
             # Vaccinate the cell where the vaccination agent currently is
             cell_x = self.vacc_agent_x
             cell_y = self.vacc_agent_y
-            vaccination_success, response = \
-                self._model.vaccinate_cell(cell_x, cell_y)
+            vaccination_success, response = self._model.vaccinate_cell(cell_x, cell_y)
             _observation = self._model.get_observation()
 
             # Force Run simulation to completion if
@@ -200,7 +189,8 @@ if __name__ == "__main__":
         dummy_simulation=False,
         simulation_single_tick=True,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = FreeExplorationEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True
@@ -213,7 +203,8 @@ if __name__ == "__main__":
     if not record:
         env.render(mode=render)
     while not done:
-        print("""
+        print(
+            """
         Valid Actions :
             MOVE_N = 0
             MOVE_E = 1
@@ -222,7 +213,8 @@ if __name__ == "__main__":
 
             VACCINATE = 4
             SIM_TICK = 5
-        """)
+        """
+        )
         # _action = int(input("Enter action - ex : "))
         env.action_space.seed(k)
         _action = env.action_space.sample()

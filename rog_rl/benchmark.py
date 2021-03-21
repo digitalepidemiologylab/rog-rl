@@ -5,12 +5,12 @@ from rog_rl import BaseGridRogRLEnv
 import cProfile
 import pstats
 
-'''
+"""
 Benchmark env time
 Code adapted from
 https://github.com/maximecb/gym-miniworld/blob/master/benchmark.py
-'''
-render_profile_file = 'profile_stats_render'
+"""
+render_profile_file = "profile_stats_render"
 
 
 def performance_metrics(render_on=False):
@@ -18,9 +18,9 @@ def performance_metrics(render_on=False):
     st = time.time()
     env_config = dict(use_renderer="simple", use_np_model=True)
 
-    '''
+    """
     To compare against standard envs like cartpole
-    '''
+    """
     # import gym
     # env = gym.make('CartPole-v0')
 
@@ -39,8 +39,9 @@ def performance_metrics(render_on=False):
     for i in range(1):
         # Profile the code
         if render_on:
-            cProfile.runctx('env.render()', globals(), locals(),
-                            filename=render_profile_file)
+            cProfile.runctx(
+                "env.render()", globals(), locals(), filename=render_profile_file
+            )
         else:
             env.render()
     render_time = 1000_000 * (time.time() - st) / 1
@@ -66,11 +67,11 @@ def performance_metrics(render_on=False):
     frame_time = 1000 * dt / num_frames
 
     print()
-    print('load time: {:,.1f} ms'.format(int(load_time)))
-    print('reset time: {:,.1f} ms'.format(reset_time))
-    print('render time: {:,.1f} ms'.format(render_time))  # \u03BCs'
-    print('frame time: {:,.1f} ms'.format(frame_time))
-    print('frame rate: {:,.1f} FPS'.format(fps))
+    print("load time: {:,.1f} ms".format(int(load_time)))
+    print("reset time: {:,.1f} ms".format(reset_time))
+    print("render time: {:,.1f} ms".format(render_time))  # \u03BCs'
+    print("frame time: {:,.1f} ms".format(frame_time))
+    print("frame rate: {:,.1f} FPS".format(fps))
 
     env.close()
 
@@ -78,10 +79,10 @@ def performance_metrics(render_on=False):
         profile(render_profile_file)
 
 
-'''
+"""
 View profile stats by Cumulative Time
 
-'''
+"""
 
 
 def profile(filename):
@@ -89,7 +90,7 @@ def profile(filename):
     p = pstats.Stats(filename)
     # p.strip_dirs().sort_stats(-1).print_stats()
     # p.print_stats()
-    p.sort_stats('cumulative').print_stats(10)
+    p.sort_stats("cumulative").print_stats(10)
 
 
 if __name__ == "__main__":

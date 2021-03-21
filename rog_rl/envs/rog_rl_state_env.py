@@ -8,11 +8,10 @@ from rog_rl import FixedOrderExplorationEnv  # noqa
 
 
 class RogRLStateEnv(Wrapper):
-
     def __init__(self, config={}, name="BaseGridRogRLEnv-v0"):
         # super().__init__(config)
         self.env = gym.make(name, config=config)
-        if hasattr(self.env, '_model'):
+        if hasattr(self.env, "_model"):
             self.model = self.env._model
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
@@ -22,7 +21,7 @@ class RogRLStateEnv(Wrapper):
         # super().reset()
         self.running_reward = 0
         obs = self.env.reset(*args, **kwargs)
-        if hasattr(self.env, '_model'):
+        if hasattr(self.env, "_model"):
             self.model = self.env._model
         return obs
 
@@ -85,7 +84,8 @@ if __name__ == "__main__":
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = RogRLStateEnv(config=env_config, name="FreeExplorationEnv-v0")
     print("USE RENDERER ?", env.env.use_renderer)
     record = False

@@ -37,7 +37,8 @@ def all_mesa_envs():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env_mesa = BaseGridRogRLEnv(config=env_config)
 
     render = "simple"  # "ansi"  # change to "PIL"
@@ -66,7 +67,8 @@ def all_mesa_envs():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     free_exploration_env_mesa = FreeExplorationEnv(config=env_config)
     return [env_mesa, free_exploration_env_mesa]
 
@@ -98,7 +100,8 @@ def all_envs():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = BaseGridRogRLEnv(config=env_config)
 
     render = "simple"  # "ansi"  # change to "PIL"
@@ -127,7 +130,8 @@ def all_envs():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     free_exploration_env = FreeExplorationEnv(config=env_config)
     return [env, free_exploration_env]
 
@@ -159,7 +163,8 @@ def env():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = BaseGridRogRLEnv(config=env_config)
     return env
 
@@ -192,11 +197,12 @@ def free_exploration_env():
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     free_exploration_env = FreeExplorationEnv(config=env_config)
     return free_exploration_env
 
 
 @pytest.fixture(scope="module")
 def names():
-    return ['BaseGridRogRLEnv-v0', 'FreeExplorationEnv-v0']
+    return ["BaseGridRogRLEnv-v0", "FreeExplorationEnv-v0"]

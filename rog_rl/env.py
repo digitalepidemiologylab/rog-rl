@@ -15,7 +15,6 @@ class ActionType(Enum):
 
 
 class RogRLEnv(gym.Env):
-
     def __init__(self, config={}):
         # Setup Config
         self.default_config = dict(
@@ -43,12 +42,13 @@ class RogRLEnv(gym.Env):
             fast_complete_simulation=True,
             simulation_single_tick=False,
             dummy_simulation=False,
-            debug=False)
+            debug=False,
+        )
         self.config = {}
         self.config.update(self.default_config)
         self.update_configs(config)
 
-        self.seed(self.config.get('seed'))
+        self.seed(self.config.get("seed"))
 
         self.dummy_simulation = self.config["dummy_simulation"]
         self.debug = self.config["debug"]
@@ -74,7 +74,9 @@ class RogRLEnv(gym.Env):
         self.last_action = None
         self.last_action_response = None
 
-        assert self.config['use_np_model'], "Non np model is not \
+        assert self.config[
+            "use_np_model"
+        ], "Non np model is not \
         , use use_np_model: True"
 
         self.renderer = False
@@ -92,17 +94,14 @@ class RogRLEnv(gym.Env):
         return [seed]
 
     def set_observation_space(self):
-        return spaces.Box(low=np.uint8(0),
-                          high=np.uint8(1),
-                          shape=(self.width,
-                                 self.height,
-                                 len(AgentState)))
+        return spaces.Box(
+            low=np.uint8(0),
+            high=np.uint8(1),
+            shape=(self.width, self.height, len(AgentState)),
+        )
 
     def set_action_space(self):
-        return spaces.MultiDiscrete(
-            [
-                len(ActionType), self.width, self.height
-            ])
+        return spaces.MultiDiscrete([len(ActionType), self.width, self.height])
 
     def set_agent_state(self):
         self.agent_state = AgentState
@@ -111,7 +110,7 @@ class RogRLEnv(gym.Env):
         self.action_type = ActionType
 
     def set_disease_model(self):
-        if self.config['use_np_model']:
+        if self.config["use_np_model"]:
             from rog_rl.model_np import DiseaseSimModel
         else:
             from rog_rl.model import DiseaseSimModel
@@ -135,23 +134,20 @@ class RogRLEnv(gym.Env):
             return self.observation_space.sample()
 
         self._step_count = 0
-        width = self.config['width']
-        height = self.config['height']
-        population_density = self.config['population_density']
-        vaccine_density = self.config['vaccine_density']
-        initial_infection_fraction = self.config['initial_infection_fraction']
-        initial_vaccination_fraction = \
-            self.config['initial_vaccination_fraction']
-        prob_infection = self.config['prob_infection']
-        prob_agent_movement = self.config['prob_agent_movement']
-        disease_planner_config = self.config['disease_planner_config']
-        max_simulation_timesteps = self.config['max_simulation_timesteps']
-        only_count_successful_vaccines = \
-            self.config['only_count_successful_vaccines']
-        early_stopping_patience = \
-            self.config['early_stopping_patience']
-        toric = self.config['toric']
-        fast_complete_simulation = self.config['fast_complete_simulation']
+        width = self.config["width"]
+        height = self.config["height"]
+        population_density = self.config["population_density"]
+        vaccine_density = self.config["vaccine_density"]
+        initial_infection_fraction = self.config["initial_infection_fraction"]
+        initial_vaccination_fraction = self.config["initial_vaccination_fraction"]
+        prob_infection = self.config["prob_infection"]
+        prob_agent_movement = self.config["prob_agent_movement"]
+        disease_planner_config = self.config["disease_planner_config"]
+        max_simulation_timesteps = self.config["max_simulation_timesteps"]
+        only_count_successful_vaccines = self.config["only_count_successful_vaccines"]
+        early_stopping_patience = self.config["early_stopping_patience"]
+        toric = self.config["toric"]
+        fast_complete_simulation = self.config["fast_complete_simulation"]
 
         """
         Seeding Strategy :
@@ -167,15 +163,21 @@ class RogRLEnv(gym.Env):
         _simulator_instance_seed = self.np_random.randint(4294967296)
         # Instantiate Disease Model
         self._model = self.disease_model(
-            width, height,
-            population_density, vaccine_density,
-            initial_infection_fraction, initial_vaccination_fraction,
-            prob_infection, prob_agent_movement,
+            width,
+            height,
+            population_density,
+            vaccine_density,
+            initial_infection_fraction,
+            initial_vaccination_fraction,
+            prob_infection,
+            prob_agent_movement,
             disease_planner_config,
-            max_simulation_timesteps, early_stopping_patience,
+            max_simulation_timesteps,
+            early_stopping_patience,
             only_count_successful_vaccines,
             fast_complete_simulation,
-            toric, seed=_simulator_instance_seed
+            toric,
+            seed=_simulator_instance_seed,
         )
 
         self.env_reset()
@@ -183,22 +185,23 @@ class RogRLEnv(gym.Env):
         # - max_simulation_timesteps
         # - Number of Vaccines available
 
-        self._max_episode_steps = self.config.get('max_episode_steps', None)
+        self._max_episode_steps = self.config.get("max_episode_steps", None)
         if self._max_episode_steps is None:
-            self._max_episode_steps = self.config['max_simulation_timesteps'] + \
-                self._model.n_vaccines
+            self._max_episode_steps = (
+                self.config["max_simulation_timesteps"] + self._model.n_vaccines
+            )
 
-#         Tick model
+        #         Tick model
         if not self.config["use_np_model"]:
             # Not needed for model_np
             self._model.tick()
 
         if self.vaccine_score_weight < 0:
             self.running_score = self.get_current_game_score(
-                include_vaccine_score=False)
+                include_vaccine_score=False
+            )
         else:
-            self.running_score = self.get_current_game_score(
-                include_vaccine_score=True)
+            self.running_score = self.get_current_game_score(include_vaccine_score=True)
         self.cumulative_reward = 0
         observation = self.get_observation()
 
@@ -225,28 +228,32 @@ class RogRLEnv(gym.Env):
     def initialize_renderer(self, mode="human"):
 
         if self.use_renderer in ["simple"]:
-            self.metadata = {'render.modes': ['simple', 'rgb_array'],
-                             'video.frames_per_second': 5}
+            self.metadata = {
+                "render.modes": ["simple", "rgb_array"],
+                "video.frames_per_second": 5,
+            }
             from rog_rl.renderer import SimpleRenderer
-            self.renderer = SimpleRenderer(
-                grid_size=(self.width, self.height)
-            )
+
+            self.renderer = SimpleRenderer(grid_size=(self.width, self.height))
 
         elif mode in ["human", "rgb_array"]:
-            self.metadata = {'render.modes': ['human', 'rgb_array'],
-                             'video.frames_per_second': 5}
+            self.metadata = {
+                "render.modes": ["human", "rgb_array"],
+                "video.frames_per_second": 5,
+            }
             from rog_rl.renderer import Renderer
 
-            self.renderer = Renderer(
-                grid_size=(self.width, self.height)
-            )
+            self.renderer = Renderer(grid_size=(self.width, self.height))
         elif mode in ["ansi"]:
             """
             Initialize ANSI Renderer here
             """
-            self.metadata = {'render.modes': ['human', 'ansi'],
-                             'video.frames_per_second': 5}
+            self.metadata = {
+                "render.modes": ["human", "ansi"],
+                "video.frames_per_second": 5,
+            }
             from rog_rl.renderer import ANSIRenderer
+
             self.renderer = ANSIRenderer()
 
         elif mode in ["PIL"]:
@@ -254,9 +261,12 @@ class RogRLEnv(gym.Env):
             Initialize PIL Headless Renderer here
             for visualising during training
             """
-            self.metadata = {'render.modes': ['PIL', 'rgb_array'],
-                             'video.frames_per_second': 5}
+            self.metadata = {
+                "render.modes": ["PIL", "rgb_array"],
+                "video.frames_per_second": 5,
+            }
             from rog_rl.renderer import PILRenderer
+
             self.renderer = PILRenderer(grid_size=(self.width, self.height))
 
         else:
@@ -265,7 +275,7 @@ class RogRLEnv(gym.Env):
         self.renderer.setup(mode=mode)
 
     def get_agents_by_state(self, state):
-        if self.config['use_np_model']:
+        if self.config["use_np_model"]:
             obs = self._model.observation
             states = np.argmax(obs, axis=-1)
             idx = np.where(states == state.value)
@@ -275,7 +285,7 @@ class RogRLEnv(gym.Env):
             return scheduler.get_agents_by_state(state)
 
     def get_agents_grid(self):
-        if self.config['use_np_model']:
+        if self.config["use_np_model"]:
             obs = self._model.observation
             return np.argmax(obs, axis=-1)
         else:
@@ -283,21 +293,21 @@ class RogRLEnv(gym.Env):
             return scheduler.get_agents_by_state()
 
     def get_agent_positions(self, agent):
-        if self.config['use_np_model']:
+        if self.config["use_np_model"]:
             agent_x, agent_y = agent
             return agent_x, agent_y
         else:
             agent_x, agent_y = agent.pos
             return agent_x, agent_y
 
-    def update_renderer(self, mode='human'):
+    def update_renderer(self, mode="human"):
         """
         Updates the latest board state on the renderer
         """
         # Draw Renderer
         # Update Renderer State
         model = self._model
-        if self.config['use_np_model']:
+        if self.config["use_np_model"]:
             total_agents = model.n_agents
             _simulation_steps = model.schedule_steps
         else:
@@ -307,34 +317,28 @@ class RogRLEnv(gym.Env):
 
         state_metrics = self.get_current_game_metrics()
 
-        initial_vaccines = int(
-            model.initial_vaccination_fraction * model.n_agents)
+        initial_vaccines = int(model.initial_vaccination_fraction * model.n_agents)
 
-        _vaccines_given = \
-            model.max_vaccines - model.n_vaccines - initial_vaccines
+        _vaccines_given = model.max_vaccines - model.n_vaccines - initial_vaccines
 
         # Game Steps includes steps in which each agent is vaccinated
         _game_steps = _simulation_steps + _vaccines_given
 
-        self.renderer.update_stats(
-            "SCORE",
-            "{:.3f}".format(self.cumulative_reward))
-        self.renderer.update_stats("VACCINE_BUDGET", "{}".format(
-            model.n_vaccines))
-        self.renderer.update_stats("SIMULATION_TICKS", "{}".format(
-            _simulation_steps))
+        self.renderer.update_stats("SCORE", "{:.3f}".format(self.cumulative_reward))
+        self.renderer.update_stats("VACCINE_BUDGET", "{}".format(model.n_vaccines))
+        self.renderer.update_stats("SIMULATION_TICKS", "{}".format(_simulation_steps))
         self.renderer.update_stats("GAME_TICKS", "{}".format(_game_steps))
         self.renderer.update_stats("ENV_STEPS", "{}".format(self._step_count))
 
         self.update_env_renderer_stats()
 
-        if self.use_renderer == 'simple':
+        if self.use_renderer == "simple":
             for key in state_metrics:
                 self.renderer.update_stats(key, state_metrics[key])
             obs = self._model.get_observation()
             return self.renderer.get_render_output(obs)
 
-        elif self.use_renderer == 'ansi':
+        elif self.use_renderer == "ansi":
             for key in state_metrics:
                 self.renderer.update_stats(key, state_metrics[key])
             grid = self.get_agents_grid()
@@ -347,21 +351,14 @@ class RogRLEnv(gym.Env):
             key = "population.{}".format(_state.name)
             stats = state_metrics[key]
             self.renderer.update_stats(
-                key,
-                "{} ({:.2f}%)".format(
-                    int(stats * total_agents),
-                    stats * 100
-                )
+                key, "{} ({:.2f}%)".format(int(stats * total_agents), stats * 100)
             )
             if mode in ["human", "rgb_array"]:
                 color = self.renderer.COLOR_MAP.get_color(_state)
                 agents = self.get_agents_by_state(_state)
                 for _agent in agents:
                     _agent_x, _agent_y = self.get_agent_positions(_agent)
-                    self.renderer.draw_cell(
-                        _agent_x, _agent_y,
-                        color
-                    )
+                    self.renderer.draw_cell(_agent_x, _agent_y, color)
         if mode in ["human", "rgb_array"]:
             # Update the rest of the renderer
             self.renderer.pre_render()
@@ -385,11 +382,9 @@ class RogRLEnv(gym.Env):
         The game score is currently represented as :
             (percentage of susceptibles left in the population)
         """
-        score = self._model.get_population_fraction_by_state(
-            AgentState.SUSCEPTIBLE)
+        score = self._model.get_population_fraction_by_state(AgentState.SUSCEPTIBLE)
         if include_vaccine_score:
-            score += self._model.get_population_fraction_by_state(
-                AgentState.VACCINATED)
+            score += self._model.get_population_fraction_by_state(AgentState.VACCINATED)
 
         return score
 
@@ -408,11 +403,12 @@ class RogRLEnv(gym.Env):
             _key = "population.{}".format(_state.name)
             _d[_key] = _value
         # Add "Protected" and "Affected"
-        _d["population.PROTECTED"] = _d["population.SUSCEPTIBLE"] + \
-            _d["population.VACCINATED"]
-        _d["population.AFFECTED"] = 1. - _d["population.PROTECTED"]
+        _d["population.PROTECTED"] = (
+            _d["population.SUSCEPTIBLE"] + _d["population.VACCINATED"]
+        )
+        _d["population.AFFECTED"] = 1.0 - _d["population.PROTECTED"]
         # Add R0 to the game metrics
-#         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
+        #         _d["R0/10"] = self._model.contact_network.compute_R0()/10.0
         return _d
 
     def get_end_of_simulation_metrics(self, dummy_simulation=False):
@@ -435,9 +431,12 @@ class RogRLEnv(gym.Env):
         n_infected = np.sum(self.initial_infection_channel)
         k = np.ones((3, 3))
         # This will include vaccination and infeted
-        ring_vaccination = convolve2d(self.initial_infection_channel,
-                                      k, 'same',
-                                      boundary=self._model.boundary) > 0
+        ring_vaccination = (
+            convolve2d(
+                self.initial_infection_channel, k, "same", boundary=self._model.boundary
+            )
+            > 0
+        )
         agent_present = np.bitwise_not(self._model.no_agent_grid)
         n_agents = self._model.n_agents
         ring_vaccination = np.bitwise_and(ring_vaccination, agent_present)
@@ -446,45 +445,49 @@ class RogRLEnv(gym.Env):
         max_vaccines_possible = n_agents - n_infected
         vaccines_used = self.n_initial_vaccines - max(0, self._model.n_vaccines)
         if min_vaccines_needed < max_vaccines_possible:
-            _d['normalized_vaccine_wastage'] = (vaccines_used - min_vaccines_needed) / \
-                (max_vaccines_possible - min_vaccines_needed)
+            _d["normalized_vaccine_wastage"] = (vaccines_used - min_vaccines_needed) / (
+                max_vaccines_possible - min_vaccines_needed
+            )
         else:
             # Weird edge case where everyone needs to be vaccinated
-            _d['normalized_vaccine_wastage'] = float(vaccines_used == min_vaccines_needed) - 1.0
+            _d["normalized_vaccine_wastage"] = (
+                float(vaccines_used == min_vaccines_needed) - 1.0
+            )
         if max_susceptible_possible > 0:
-            _d['normalized_susceptible'] = stats["population.SUSCEPTIBLE"] * n_agents / max_susceptible_possible
+            _d["normalized_susceptible"] = (
+                stats["population.SUSCEPTIBLE"] * n_agents / max_susceptible_possible
+            )
         else:
-            _d['normalized_susceptible'] = 1.
-        _d['normalized_protected'] = protected / (1 - n_infected / n_agents)
+            _d["normalized_susceptible"] = 1.0
+        _d["normalized_protected"] = protected / (1 - n_infected / n_agents)
 
         return _d
 
     def calculate_rewards(self):
         # Compute difference in game score
         if self.vaccine_score_weight < 0:
-            current_score = self.get_current_game_score(
-                include_vaccine_score=False)
+            current_score = self.get_current_game_score(include_vaccine_score=False)
             _step_reward = current_score - self.running_score
             self.cumulative_reward += _step_reward
             self.running_score = current_score
         else:
-            current_score = self.get_current_game_score(
-                include_vaccine_score=True)
+            current_score = self.get_current_game_score(include_vaccine_score=True)
             _step_reward = current_score - self.running_score
             self.running_score = current_score
             _done = not self._model.is_running()
             if _done:
-                _step_reward = self.terminal_reward(
-                    current_score, _step_reward)
+                _step_reward = self.terminal_reward(current_score, _step_reward)
             self.cumulative_reward += _step_reward
 
         return _step_reward
 
     def terminal_reward(self, current_score, _step_reward):
         susecptible_percentage = self.get_current_game_score(
-            include_vaccine_score=False)
-        _step_reward -= (current_score - susecptible_percentage) * \
-            self.vaccine_score_weight
+            include_vaccine_score=False
+        )
+        _step_reward -= (
+            current_score - susecptible_percentage
+        ) * self.vaccine_score_weight
         return _step_reward
 
     def step_action(self, action):
@@ -500,7 +503,7 @@ class RogRLEnv(gym.Env):
         Handle SIM_TICK action
         """
         # Handle action propagation in real simulator
-        if not self.config.get('simulation_single_tick', False):
+        if not self.config.get("simulation_single_tick", False):
             self._model.tick()
         else:
             self._model.run_simulation_to_end()
@@ -513,8 +516,10 @@ class RogRLEnv(gym.Env):
         if self.dummy_simulation:
             return self.dummy_env_step()
 
-        assert self.action_space.contains(
-            action), "%r (%s) invalid" % (action, type(action))
+        assert self.action_space.contains(action), "%r (%s) invalid" % (
+            action,
+            type(action),
+        )
         if self._model is None:
             raise Exception("env.step() called before calling env.reset()")
 
@@ -537,7 +542,7 @@ class RogRLEnv(gym.Env):
         for _key in game_metrics.keys():
             _info[_key] = game_metrics[_key]
 
-        _info['cumulative_reward'] = self.cumulative_reward
+        _info["cumulative_reward"] = self.cumulative_reward
         _done = not self._model.is_running()
         if _done:
             end_sim_metrics = self.get_end_of_simulation_metrics()
@@ -561,7 +566,7 @@ class RogRLEnv(gym.Env):
 
         return observation, reward, done, info
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         """
         This methods provides the option to render the
         environment's behavior to a window which should be
@@ -577,7 +582,7 @@ class RogRLEnv(gym.Env):
 
     def close(self):
         if self.renderer:
-            if hasattr(self.renderer, 'close'):
+            if hasattr(self.renderer, "close"):
                 self.renderer.close()
             self.renderer = False
         if self._model:
@@ -610,7 +615,8 @@ if __name__ == "__main__":
         fast_complete_simuation=True,
         toric=False,
         dummy_simulation=False,
-        debug=True)
+        debug=True,
+    )
     env = RogRLEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = False

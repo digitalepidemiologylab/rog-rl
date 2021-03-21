@@ -4,23 +4,24 @@ import click
 
 
 @click.command(name="demo")
-@click.option('--width',
-              default=10,
-              help="Width of the Grid"
-              )
-@click.option('--height',
-              default=10,
-              help="Height of the Grid"
-              )
+@click.option("--width", default=10, help="Width of the Grid")
+@click.option("--height", default=10, help="Height of the Grid")
 def demo(width, height):  # pragma: no cover
     """
     Demo script to test installation
     """
     from rog_rl import BaseGridRogRLEnv
+
     render = "ansi"
-    env = BaseGridRogRLEnv({"debug": True, "width": width, "height": height,
-                            "use_np_model": True,
-                            "use_renderer": render})
+    env = BaseGridRogRLEnv(
+        {
+            "debug": True,
+            "width": width,
+            "height": height,
+            "use_np_model": True,
+            "use_renderer": render,
+        }
+    )
 
     observation = env.reset()
     done = False
@@ -30,10 +31,12 @@ def demo(width, height):  # pragma: no cover
 
 
 @click.command(name="profile-perf")
-@click.option('-ron/-rof', '--render_on/--render_off',
-              default=False,
-              help="If render profiling required"
-              )
+@click.option(
+    "-ron/-rof",
+    "--render_on/--render_off",
+    default=False,
+    help="If render profiling required",
+)
 def profile_perf(render_on):
     """
     Run script to obtain performance metrics.

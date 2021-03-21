@@ -7,6 +7,7 @@ class ContactNetwork:
     This keeps a record of all the "contacts" that happen in a
     single simulation
     """
+
     def __init__(self):
         self.contact_network = {}
         self.infection_network = {}

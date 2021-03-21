@@ -6,6 +6,7 @@ class DiseaseSimAgent(Agent):  # noqa
     """
     DiseaseSimAgent
     """
+
     pos = None
     moore = True
     prob_agent_movement = 0.0
@@ -38,7 +39,8 @@ class DiseaseSimAgent(Agent):  # noqa
 
         # Update Agent State Registry in Scheduler
         self.model.schedule.update_agent_state_in_registry(
-            self, previous_state=previous_state)
+            self, previous_state=previous_state
+        )
 
         # Update Global Observation in model observation buffer
         self.model.observation[self.pos[0], self.pos[1], :] = 0
@@ -47,8 +49,9 @@ class DiseaseSimAgent(Agent):  # noqa
     def process_state_transitions(self):
         try:
             _event = self.state_transition_plan[self.model.schedule.steps]
-            assert self.state == _event.previous_state, \
-                "Mismatch in state during state_transition"
+            assert (
+                self.state == _event.previous_state
+            ), "Mismatch in state during state_transition"
             self.set_state(_event.new_state)
             _event.mark_as_executed()
         except KeyError:
@@ -68,20 +71,25 @@ class DiseaseSimAgent(Agent):  # noqa
         else:
             if self.random.random() < prob_infection:
                 # Prepare a disease plan
-                disease_plan = \
-                    self.model.disease_planner.get_disease_plan(
-                        base_timestep=self.model.schedule.steps)
+                disease_plan = self.model.disease_planner.get_disease_plan(
+                    base_timestep=self.model.schedule.steps
+                )
                 for _agent_event in disease_plan:
                     # Check if a state transition plan is already present
                     # for the said timestep
                     try:
-                        foo = self.state_transition_plan[_agent_event.update_timestep]  # noqa
+                        foo = self.state_transition_plan[
+                            _agent_event.update_timestep
+                        ]  # noqa
                         raise Exception(
-                            "Attempt to assign multiple state transition plans for the same timestep")  # noqa
+                            "Attempt to assign multiple state transition plans for the same timestep"
+                        )  # noqa
                     except KeyError:
                         pass
                     # Mark the state transition plan for the said timestep
-                    self.state_transition_plan[_agent_event.update_timestep] = _agent_event  # noqa
+                    self.state_transition_plan[
+                        _agent_event.update_timestep
+                    ] = _agent_event  # noqa
                 self._is_infection_scheduled = True
                 return True
             else:
@@ -105,7 +113,8 @@ class DiseaseSimAgent(Agent):  # noqa
             # Find empty cells in neighborhood
             empty_cells_in_neighborhood = []
             for x, y in self.model.grid.iter_neighborhood(
-                    pos=self.pos, moore=self.moore, include_center=False, radius=1):  # noqa
+                pos=self.pos, moore=self.moore, include_center=False, radius=1
+            ):  # noqa
                 if (x, y) in self.model.grid.empties:
                     empty_cells_in_neighborhood.append((x, y))
             # If empty cells are availabel - move to a randomly chosen one

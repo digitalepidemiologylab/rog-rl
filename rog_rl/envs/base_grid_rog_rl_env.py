@@ -13,21 +13,15 @@ class ActionType(Enum):
 
 
 class BaseGridRogRLEnv(RogRLEnv):
-
     def set_observation_space(self):
         return spaces.Box(
             low=np.float32(0),
             high=np.float32(1),
-            shape=(
-                self.width,
-                self.height,
-                len(AgentState)))
+            shape=(self.width, self.height, len(AgentState)),
+        )
 
     def set_action_space(self):
-        return spaces.MultiDiscrete(
-            [
-                len(ActionType), self.width, self.height
-            ])
+        return spaces.MultiDiscrete([len(ActionType), self.width, self.height])
 
     def set_action_type(self):
         self.action_type = ActionType
@@ -52,8 +46,7 @@ class BaseGridRogRLEnv(RogRLEnv):
         if action_type == ActionType.STEP.value:
             self._model.tick()
         elif action_type == ActionType.VACCINATE.value:
-            vaccination_success, response = \
-                self._model.vaccinate_cell(cell_x, cell_y)
+            vaccination_success, response = self._model.vaccinate_cell(cell_x, cell_y)
 
         _observation = self.get_observation()
         return _observation, response
@@ -84,7 +77,8 @@ if __name__ == "__main__":
         toric=False,
         dummy_simulation=False,
         debug=True,
-        seed=0)
+        seed=0,
+    )
     env = BaseGridRogRLEnv(config=env_config)
     print("USE RENDERER ?", env.use_renderer)
     record = True

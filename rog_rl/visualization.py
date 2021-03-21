@@ -12,7 +12,7 @@ class CustomTextGrid(TextGrid):
     grid = None
 
     def __init__(self, grid, converter=None):
-        """ Create a new ASCII grid visualization.
+        """Create a new ASCII grid visualization.
         Args:
             grid: The underlying Grid object.
             converter: function for converting the content of each cell
