@@ -453,7 +453,7 @@ env = RogEnv(config=_config)
 
 Apart from the standard reward metrics, it can be useful to look at the different agent states to get an idea of the effectiveness of our vaccine. A good vaccination strategy means the number of susceptible agents should be high, while the other agent states namely Infectious and recovered should be less. An optimal usage of vaccines would further mean the least amount of vaccines used or less number of agents in vaccinated state.
 
-To measure this across different environment configurations and environment types, we come up with the following normalised set of metrics. 
+To measure this across different environment configurations and environment types, we come up with the following normalised set of metrics.
 
 * `normalized_susceptible`
 * `normalized_protected `
@@ -471,9 +471,9 @@ The most desired agent behavior is
 Based on if the above 2 conditions are True or False, 4 main combinations are possible for different agent behaviors. They are ordered below based on their priority with the first case being the most preferred agent behavior and the last case representing the least preferred agent behavior.
 
 1. In case of perfect ring vaccination with optimal usage of vaccines, the normalized_susceptible would have a value of `1`.  This is the perfect case when the agent has successfully prevented vaccines and there is no wastage of vaccines.
-2. In case of perfect ring vaccination and hence no disease spreads to other agents, the normalized_protected would have a value of `1`. If vaccines are wasted, then the vaccine_wastage would have a value > `0`.
+2. In case of perfect ring vaccination and hence no disease spreads to other agents, the normalized_protected would have a value of `1`. If vaccines are wasted, then the vaccine_wastage would have a value `< 0 or > 0`.
 3. In case the optimal vaccines are used, but ring vaccination does not happen and the disease spreads, vaccine_wastage would have a value of `0` and normalized_protected would have a value of < `1`.
-4. In case neither optimal vaccines are used or ring vaccination does not happen and the disease spreads, vaccine_wastage would have a value < `0` and normalized_protected would have a value of < `1`.
+4. In case neither optimal vaccines are used or ring vaccination does not happen and the disease spreads, vaccine_wastage would have a value  `< 0 or > 0` and normalized_protected would have a value of < `1`.
 
 We summarise the values of all our normalised metrics for the 4 scenarios in the table below.
 
@@ -490,10 +490,6 @@ Based on the table, we can see that the preferred values for normalized_suscepti
 In terms of the normalised metrics, most desirable agent performance is a normalized_susceptible value of 1, followed by a normalized_protected value of 1. Both of these ensure that the disease does not spread to other susceptible agents.
 
 The normalised_susceptible metric combines the 2 metrics normalised protected and vaccine_wastage into one number. This single metric is useful to compare against other agent runs to understand which agent performance is better.
-
-## Environment Dynamics
-
-Refer [here](./ENVIRONMENT.md).
 
 ## Contributing
 
