@@ -78,7 +78,7 @@ class DiseaseSimAgent(Agent):  # noqa
                     # Check if a state transition plan is already present
                     # for the said timestep
                     try:
-                        foo = self.state_transition_plan[
+                        foo = self.state_transition_plan[  # noqa
                             _agent_event.update_timestep
                         ]  # noqa
                         raise Exception(
