@@ -16,7 +16,8 @@ requirements = [
     "gym>=0.17.1",
     "numpy>=1.18",
     "mesa>=0.8.6",
-    "colorama>=0.4.3" "scikit-image>=0.17.2",
+    "colorama>=0.4.3",
+    "scikit-image>=0.17.2"
 ]
 
 setup_requirements = []
