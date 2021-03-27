@@ -15,7 +15,7 @@ pytest-runner>=5.1
 codecov>=2.0.22
 m2r==0.2.1
 gym>=0.17.1
-numpy>=1.18
+numpy>=1.18,<=1.19.4
 mesa>=0.8.6
 colorama>=0.4.3
 scikit-image>=0.17.2
