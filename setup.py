@@ -13,7 +13,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "Click>=7.0",
-    "gym>=0.17.1",
+    "gym==0.17.3",
     "numpy>=1.18,<=1.19.4",
     "mesa>=0.8.6",
     "colorama>=0.4.3",
