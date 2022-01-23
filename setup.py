@@ -17,7 +17,8 @@ requirements = [
     "numpy>=1.18,<=1.19.4",
     "mesa>=0.8.6",
     "colorama>=0.4.3",
-    "scikit-image>=0.17.2"
+    "scikit-image>=0.17.2",
+    "opencv-python"
 ]
 
 setup_requirements = []
