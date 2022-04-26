@@ -754,7 +754,8 @@ class PILRenderer(Renderer):
 
 class SimpleRenderer:
     def __init__(self, grid_size):
-
+        
+        self.first_obs = None
         self.width, self.height = grid_size
         self.colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0)]
         minimagesize = 120
@@ -828,6 +829,16 @@ class SimpleRenderer:
         self.stats[key] = value
 
     def get_render_output(self, obs):
+        
+        if self.first_obs is None:
+            self.first_obs = obs.copy()
+        # else:
+        #     print("----------------------------------------------------------------------------------------------")
+        #     print("----------------------------------------------------------------------------------------------")
+        #     print("----------------------------------------------------------------------------------------------")
+        #     print("----------------------------------------------------------------------------------------------")
+        #     print("----------------------------------------------------------------------------------------------")
+
 
         k = 3
         arr = np.zeros((self.width * k, self.height * k, 3), np.uint8) + 255
@@ -836,12 +847,33 @@ class SimpleRenderer:
         for i, c in enumerate(self.colors):
             state2col[obs[..., i].astype(bool), :] = c
 
+            
+        # Retain the first infections as same color
+        infect_color = self.colors[AgentState.INFECTIOUS.value]
+        infectious_locs = self.first_obs[..., AgentState.INFECTIOUS.value]
+        state2col[infectious_locs.astype(bool), :] = infect_color
+
         vx = self.stats.get("VACC_AGENT_X", None)
         vy = self.stats.get("VACC_AGENT_Y", None)
+        local_radius = self.stats.get("LOCAL_RADIUS", None)
         if vx is not None and vy is not None:
             va_r = int(vx) * k
             va_c = int(vy) * k
             arr[va_r : va_r + k, va_c : va_c + k] = 0
+            if local_radius is not None:
+                lrk = int(local_radius) * k
+                w, h  = arr.shape[:2]
+
+                rlim_max = min(va_r + lrk, w-1)
+                rlim_min = max(va_r - lrk, 0)
+                clim_max = min(va_c + lrk, h-1)
+                clim_min = max(va_c - lrk, 0)
+
+                arr[rlim_max, clim_min : clim_max] = (0, 255, 255)
+                arr[rlim_min, clim_min : clim_max] = (0, 255, 255)
+
+                arr[rlim_min : rlim_max, clim_max] = (0, 255, 255)
+                arr[rlim_min : rlim_max, clim_min] = (0, 255, 255)
 
         # Puts value in spaced grid
         arr[k // 2 :: k, k // 2 :: k] = state2col

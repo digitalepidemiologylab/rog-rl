@@ -95,7 +95,6 @@ class FreeExplorationEnv(RogRLEnv):
         vaccination_agent_channel[self.vacc_agent_x, self.vacc_agent_y] = 1
 
         p_obs = np.dstack([observation, vaccination_agent_channel])
-
         return np.uint8(p_obs)
 
     def step_action(self, action):
@@ -164,10 +163,10 @@ class FreeExplorationEnv(RogRLEnv):
 if __name__ == "__main__":
 
     np.random.seed(100)
-    render = "ansi"  # "ansi"  # change to "human"
+    render = "simple" #"ansi"  # "ansi"  # change to "human"
     env_config = dict(
         width=5,
-        height=7,
+        height=5,
         population_density=1.0,
         vaccine_density=1.0,
         initial_infection_fraction=0.04,
@@ -198,6 +197,8 @@ if __name__ == "__main__":
         # records the the rendering in the `recording` folder
         env = wrappers.Monitor(env, "recording", force=True)
     observation = env.reset()
+
+    # import pdb; pdb.set_trace()
     done = False
     k = 0
     if not record:
@@ -217,7 +218,8 @@ if __name__ == "__main__":
         )
         # _action = int(input("Enter action - ex : "))
         env.action_space.seed(k)
-        _action = env.action_space.sample()
+        # _action = env.action_space.sample()
+        _action = 1
 
         print("Action : ", _action, "     Step:", k)
         observation, reward, done, info = env.step(_action)
