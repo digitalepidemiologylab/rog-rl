@@ -860,7 +860,7 @@ class SimpleRenderer:
             va_r = int(vx) * k
             va_c = int(vy) * k
             arr[va_r : va_r + k, va_c : va_c + k] = 0
-            if local_radius is not None:
+            if local_radius is not None and local_radius > 1:
                 lrk = int(local_radius) * k
                 w, h  = arr.shape[:2]
 
