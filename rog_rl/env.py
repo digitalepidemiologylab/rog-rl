@@ -560,6 +560,8 @@ class RogRLEnv(gym.Env):
             end_sim_metrics = self.get_end_of_simulation_metrics()
             for _key in end_sim_metrics.keys():
                 _info[_key] = end_sim_metrics[_key]
+            
+            self.rollout_data['info'] = _info
 
         _observation = self.post_process_observation(_observation)
         
