@@ -136,9 +136,13 @@ class RogRLEnv(gym.Env):
         self._step_count = 0
         width = self.config["width"]
         height = self.config["height"]
-        population_density = self.config["population_density"]
+        population_density = self.np_random.uniform(*self.config["population_density"]) \
+                                if isinstance(self.config["population_density"], list) \
+                                else self.config["population_density"]
         vaccine_density = self.config["vaccine_density"]
-        initial_infection_fraction = self.config["initial_infection_fraction"]
+        initial_infection_fraction =  self.np_random.uniform(*self.config["initial_infection_fraction"]) \
+                                        if isinstance(self.config["initial_infection_fraction"], list) \
+                                        else self.config["initial_infection_fraction"]
         initial_vaccination_fraction = self.config["initial_vaccination_fraction"]
         prob_infection = self.config["prob_infection"]
         prob_agent_movement = self.config["prob_agent_movement"]
