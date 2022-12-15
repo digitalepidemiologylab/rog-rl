@@ -203,7 +203,8 @@ if __name__ == "__main__":
     k = 0
     if not record:
         env.render(mode=render)
-    while not done:
+    donecount = 0
+    while donecount < 3:
         print(
             """
         Valid Actions :
@@ -218,8 +219,8 @@ if __name__ == "__main__":
         )
         # _action = int(input("Enter action - ex : "))
         env.action_space.seed(k)
-        # _action = env.action_space.sample()
-        _action = 1
+        _action = env.action_space.sample()
+        # _action = 1
 
         print("Action : ", _action, "     Step:", k)
         observation, reward, done, info = env.step(_action)
@@ -230,6 +231,9 @@ if __name__ == "__main__":
         print("Vacc_agent_location : ", env.vacc_agent_x, env.vacc_agent_y)
         k += 1
         print("=" * 100)
+        if done: 
+            donecount += 1
+            observation = env.reset()
         # print(observation.shape)
         # print(k, reward, done)
     print(np.sum(observation, axis=0))

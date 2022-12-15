@@ -853,6 +853,10 @@ class SimpleRenderer:
         infectious_locs = self.first_obs[..., AgentState.INFECTIOUS.value]
         state2col[infectious_locs.astype(bool), :] = infect_color
 
+        # TODO: Reset first observation when Done (WARNING: HACKY WAY - Only works when single sim tick at end)
+        if np.any(obs[..., AgentState.RECOVERED.value]):
+            self.first_obs = None
+
         vx = self.stats.get("VACC_AGENT_X", None)
         vy = self.stats.get("VACC_AGENT_Y", None)
         local_radius = self.stats.get("LOCAL_RADIUS", None)
