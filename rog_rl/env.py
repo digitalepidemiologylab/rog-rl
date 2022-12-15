@@ -85,6 +85,7 @@ class RogRLEnv(gym.Env):
             self.initialize_renderer(mode=self.use_renderer)
 
         self.cumulative_reward = 0
+        self.rollout_data = None
 
     def update_configs(self, config={}):
         self.config.update(config)
@@ -212,6 +213,13 @@ class RogRLEnv(gym.Env):
         # Used for extra metrics
         self.initial_infection_channel = self._model.infection_scheduled_grid.copy()
         self.n_initial_vaccines = self._model.n_vaccines
+
+        self.rollout_data = {"actions": []}
+        self.rollout_data["initial_observation"] = {"grid": np.argmax(self._model.observation, axis=-1),
+                                                    "vacc_agent_x": self.vacc_agent_x,
+                                                    "vacc_agent_y": self.vacc_agent_y,          
+                                                    }
+        self.rollout_data["seed"] = self.config.get("seed")
 
         return observation
 
@@ -554,6 +562,9 @@ class RogRLEnv(gym.Env):
                 _info[_key] = end_sim_metrics[_key]
 
         _observation = self.post_process_observation(_observation)
+        
+        self.rollout_data['actions'].append(action)
+
         return _observation, _step_reward, _done, _info
 
     def dummy_env_step(self):
