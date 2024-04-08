@@ -7,7 +7,7 @@ A simple Gym environment for RL experiments around disease transmission in a gri
 ## Installation
 
 ```bash
-pip install -U git+git://gitlab.aicrowd.com/rog-rl/rog-rl.git
+pip install git+https://github.com/digitalepidemiologylab/rog-rl.git
 rog-rl-demo
 ```
 
